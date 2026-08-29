@@ -1141,6 +1141,17 @@
     let lastValidInterstate = null;
     let lastValidRouteShield = null;
 
+    // Smart Trajectory & Intersection Disambiguation State
+    let lastKnownMovingHeading = 0;
+    let stationaryLockActive = false;
+    let stationaryAnchorLat = null;
+    let stationaryAnchorLon = null;
+    let consecutiveRoadMatches = 0;
+    let pendingCandidateRoad = null;
+    let travelDistanceOnCurrentRoadMeters = 0;
+    let lastPositionUpdateLat = null;
+    let lastPositionUpdateLon = null;
+
     // HUD Gauge Sizing (small, medium, large)
     let hudScale = localStorage.getItem('nomad_hud_scale') || 'medium';
 
@@ -1243,9 +1254,31 @@
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
       return audioCtx;
     }
+
+    // iOS/Android synchronous touch gesture audio unlocker
+    function preWarmAudioContext() {
+      try {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        // Play zero-amplitude inaudible buffer to securely unlock hardware audio pipeline
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+      } catch (e) {}
+    }
+
+    ['touchstart', 'touchend', 'mousedown', 'keydown', 'pointerdown'].forEach(evt => {
+      window.addEventListener(evt, preWarmAudioContext, { once: true, passive: true });
+    });
 
     function playArcadeSound(isActivation) {
       try {
@@ -2165,37 +2198,103 @@
       return (Date.now() - lastSettledHeadingTimestamp) < 3000;
     }
 
+    /* SECONDARY CONSENSUS REVERSE GEOCODER (BigDataCloud Free Keyless Client API) */
+    async function fetchSecondaryReverseGeocode(lat, lon) {
+      try {
+        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const bdc = await res.json();
+        if (bdc) {
+          const street = bdc.localityInfo?.administrative?.[bdc.localityInfo.administrative.length - 1]?.name || bdc.locality || bdc.city || "";
+          return {
+            street: street,
+            city: bdc.city || bdc.locality || "",
+            state: bdc.principalSubdivision || "",
+            postcode: bdc.postcode || "",
+            country: bdc.countryName || ""
+          };
+        }
+      } catch (e) {}
+      return null;
+    }
+
     async function fetchLocationDetails(lat, lon, speed) {
       document.getElementById('lat-lon').innerText = `Lat: ${lat.toFixed(5)} | Lon: ${lon.toFixed(5)}`;
       const now = Date.now();
       const speedMph = (speed !== null && !isNaN(speed)) ? (speed * 2.23694) : 0;
 
+      // Track distance moved since last position check
+      if (lastPositionUpdateLat !== null && lastPositionUpdateLon !== null) {
+        const stepDist = getDistanceFromLatLonInMeters(lastPositionUpdateLat, lastPositionUpdateLon, lat, lon);
+        travelDistanceOnCurrentRoadMeters += stepDist;
+      }
+      lastPositionUpdateLat = lat;
+      lastPositionUpdateLon = lon;
+
+      // 1. CRITICAL STATIONARY LOCK ENGINE (Solves Intersection Hopping & Stoplight Drift)
+      // When vehicle is stopped or moving at crawl speed (< 2.8 MPH), lock the current road name completely.
+      if (speedMph < 2.8) {
+        if (!stationaryLockActive) {
+          stationaryLockActive = true;
+          stationaryAnchorLat = lat;
+          stationaryAnchorLon = lon;
+        } else if (stationaryAnchorLat !== null && stationaryAnchorLon !== null) {
+          const driftDist = getDistanceFromLatLonInMeters(stationaryAnchorLat, stationaryAnchorLon, lat, lon);
+          // If within 25m stoplight GPS error ellipse, never alter street name
+          if (driftDist < 25) {
+            return;
+          }
+        }
+      } else {
+        // Vehicle is moving; disengage stationary lock
+        stationaryLockActive = false;
+        stationaryAnchorLat = null;
+        stationaryAnchorLon = null;
+      }
+
+      // Throttle lookups to at most once every 3.5s when moving
       if (hasInitialGeocode) {
-        if (speed !== null && !isNaN(speed) && speed < 0.7 && !isHighwayLocked) return;
         if (now - lastGeocodeTime < 3500) return;
         if (lastGeocodedLat !== null && lastGeocodedLon !== null) {
           const distanceMoved = getDistanceFromLatLonInMeters(lastGeocodedLat, lastGeocodedLon, lat, lon);
-          if (distanceMoved < 20) return;
+          if (distanceMoved < 15) return;
         }
       }
 
       lastGeocodeTime = now;
-      const targetZoom = isHighwayLocked ? 15 : (speedMph > 40 ? 15 : 17);
+      // Fixed zoom 18 for granular roadbed precision; never degrade to regional zoom 15
+      const targetZoom = 18;
 
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=${targetZoom}&addressdetails=1&extratags=1&namedetails=1`;
-        const response = await fetch(url, {
-          headers: { "User-Agent": "NomadRoadTripHUD/2.0" }
-        });
-        const data = await response.json();
-        
-        if (data && data.address) {
+        let response = null;
+        let data = null;
+
+        try {
+          response = await fetch(url, {
+            headers: { "User-Agent": "NomadRoadTripHUD/3.0" }
+          });
+          if (response.ok) {
+            data = await response.json();
+          }
+        } catch (netErr) {
+          console.warn("Primary Nominatim Geocode Network Error:", netErr);
+        }
+
+        // Secondary fallback if Nominatim is unreachable or rate-limited
+        let secondaryFallback = null;
+        if (!data || !data.address) {
+          secondaryFallback = await fetchSecondaryReverseGeocode(lat, lon);
+        }
+
+        if ((data && data.address) || secondaryFallback) {
           lastGeocodedLat = lat;
           lastGeocodedLon = lon;
           hasInitialGeocode = true;
 
-          const addr = data.address;
-          const { interstate, usRoute, stateRoute, rawRoad, isLink, isMotorway } = parseUniversalRoadSignage(data);
+          const addr = data ? data.address : {};
+          const { interstate, usRoute, stateRoute, rawRoad, isLink, isMotorway } = data ? parseUniversalRoadSignage(data) : { interstate: null, usRoute: null, stateRoute: null, rawRoad: secondaryFallback?.street || "", isLink: false, isMotorway: false };
 
           const isTrueHighway = isMotorway || interstate !== null;
 
@@ -2204,13 +2303,13 @@
             highwayLockSignature = interstate || usRoute || rawRoad || "HIGHWAY";
             consecutiveSurfaceReads = 0;
           } else if (isHighwayLocked) {
-            const isExiting = isLink || speedMph < 40;
+            const isExiting = isLink || speedMph < 35;
             const isUnnamedOrLocal = !rawRoad || /^Unnamed/i.test(rawRoad) || !isTrueHighway;
 
             if (isExiting || isUnnamedOrLocal) {
               consecutiveSurfaceReads++;
               if (consecutiveSurfaceReads >= 2) {
-                // PURGE HIGHWAY LOCK AND ALL GHOST CACHES
+                // PURGE HIGHWAY LOCK
                 isHighwayLocked = false;
                 highwayLockSignature = null;
                 lastValidDisplayTitle = "";
@@ -2254,10 +2353,40 @@
               candidateRoadName = `${candidateRoadName} ${getHighwayDirection(usRoute, currentHeading)}`;
             }
           } else {
-            candidateRoadName = rawRoad || "Unnamed Road";
+            candidateRoadName = rawRoad || (secondaryFallback ? secondaryFallback.street : "Unnamed Road");
             const isExpressway = /\b(Turnpike|Tpk|Expressway|Parkway|Pkwy|Hwy|Highway)\b/i.test(candidateRoadName);
             if (isExpressway && currentHeading !== null && !isNaN(currentHeading)) {
               candidateRoadName = `${candidateRoadName} ${getCardinalRoadDirection(currentHeading)}`;
+            }
+          }
+
+          // 2. TRAJECTORY & HYSTERESIS GATE
+          // If we are traveling straight without a major turn (< 25 deg heading delta),
+          // require either matching current road OR sustained travel before switching names.
+          if (lastValidDisplayTitle && candidateRoadName !== lastValidDisplayTitle && speedMph > 3) {
+            let headingDelta = 0;
+            if (lastKnownMovingHeading !== null && currentHeading !== null) {
+              headingDelta = Math.abs(currentHeading - lastKnownMovingHeading);
+              if (headingDelta > 180) headingDelta = 360 - headingDelta;
+            }
+
+            // If driving straight (< 20 deg turn) and haven't traveled at least 45 meters, require 2 consecutive reads
+            if (headingDelta < 20 && travelDistanceOnCurrentRoadMeters < 45) {
+              if (pendingCandidateRoad === candidateRoadName) {
+                consecutiveRoadMatches++;
+              } else {
+                pendingCandidateRoad = candidateRoadName;
+                consecutiveRoadMatches = 1;
+              }
+
+              if (consecutiveRoadMatches < 2) {
+                // Hold previous stable road name to avoid momentary intersection captures
+                candidateRoadName = lastValidDisplayTitle;
+              } else {
+                travelDistanceOnCurrentRoadMeters = 0;
+              }
+            } else {
+              travelDistanceOnCurrentRoadMeters = 0;
             }
           }
 
@@ -2295,10 +2424,10 @@
             lastValidFullAddress = fullStreetAddress;
           }
 
-          const city = addr.city || addr.town || addr.village || addr.municipality || "";
-          const stateFull = addr.state || "";
+          const city = addr.city || addr.town || addr.village || addr.municipality || secondaryFallback?.city || "";
+          const stateFull = addr.state || secondaryFallback?.state || "";
           const county = addr.county || "";
-          const postcode = addr.postcode || "";
+          const postcode = addr.postcode || secondaryFallback?.postcode || "";
           const stateCode = stateAbbreviations[stateFull] || stateFull;
 
           document.getElementById('street-name').innerText = fullStreetAddress;
@@ -2400,9 +2529,19 @@
       } catch (err) {}
     }
 
-    function updateHeading(heading) {
+    function updateHeading(heading, fromDeviceOrientation = false) {
       if (heading !== null && !isNaN(heading)) {
+        const speedMph = (rawSpeedMps !== null && !isNaN(rawSpeedMps)) ? (rawSpeedMps * 2.23694) : 0;
+        
+        // When driving (> 3.2 MPH), GPS velocity vector takes absolute priority over device tilt
+        if (fromDeviceOrientation && speedMph > 3.2) {
+          return;
+        }
+
         currentHeading = heading;
+        if (speedMph > 3.2) {
+          lastKnownMovingHeading = heading;
+        }
         pushHeadingHistory(heading);
         renderTelemetryBadge();
 
@@ -2461,22 +2600,25 @@
             const { latitude, longitude, heading, speed, altitude, accuracy } = position.coords;
             const lngLat = [longitude, latitude];
 
-            if (heading !== null && !isNaN(heading)) {
-              currentHeading = heading;
-              pushHeadingHistory(heading);
-            }
-
             rawAltitudeMeters = altitude;
             rawAccuracyMeters = accuracy;
             lastLat = latitude;
             lastLon = longitude;
 
             rawSpeedMps = speed;
+            const speedMph = (speed !== null && !isNaN(speed)) ? (speed * 2.23694) : 0;
+
+            if (heading !== null && !isNaN(heading)) {
+              updateHeading(heading, false);
+            } else if (speedMph < 2.5 && lastKnownMovingHeading !== null) {
+              // Maintain last known direction when stopped instead of snapping to 0/null
+              renderTelemetryBadge();
+            } else {
+              renderTelemetryBadge();
+            }
+
             renderSpeed();
             updateMapCamera(lngLat);
-
-            if (heading !== null && !isNaN(heading)) updateHeading(heading);
-            else renderTelemetryBadge();
 
             fetchLocationDetails(latitude, longitude, speed);
             fetchWeatherAndElevation(latitude, longitude);
@@ -2492,7 +2634,7 @@
     if (window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', (event) => {
         if (event.webkitCompassHeading) {
-          updateHeading(event.webkitCompassHeading);
+          updateHeading(event.webkitCompassHeading, true);
         }
       });
     }

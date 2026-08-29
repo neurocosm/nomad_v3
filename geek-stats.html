@@ -419,6 +419,7 @@
       </div>
 
       <div class="blackbox-actions">
+        <button class="btn-term-action" onclick="exportBlackBoxGPX()">📍 EXPORT .GPX</button>
         <button class="btn-term-action" onclick="exportBlackBoxLog()">💾 EXPORT .LOG</button>
         <button class="btn-term-action" id="btn-copy-csv" onclick="copyBlackBoxCSV()">📋 COPY CSV</button>
         <button class="btn-term-action" onclick="purgeBlackBoxLog()">🗑️ PURGE RECORDER</button>
@@ -652,6 +653,45 @@
         csv += `${l.timestamp},${l.lat},${l.lon},${road},${iShield},${rShield},${l.speedMph},"${l.heading}"\n`;
       });
       return csv;
+    }
+
+    function exportBlackBoxGPX() {
+      const logs = getBlackBoxLogs();
+      if (logs.length === 0) {
+        alert("Black Box is empty. No telemetry to export.");
+        return;
+      }
+
+      let gpx = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      gpx += `<gpx version="1.1" creator="NOMAD RoadTrip HUD" xmlns="http://www.topografix.com/GPX/1/1">\n`;
+      gpx += `  <trk>\n    <name>NOMAD BlackBox Flight Track</name>\n    <trkseg>\n`;
+
+      logs.forEach(l => {
+        const timeISO = new Date(l.timestamp).toISOString();
+        gpx += `      <trkpt lat="${l.lat}" lon="${l.lon}">\n`;
+        gpx += `        <time>${timeISO}</time>\n`;
+        gpx += `        <name>${(l.roadName || 'Way').replace(/[<>&]/g, '')}</name>\n`;
+        if (l.speedMph) {
+          const speedMps = (l.speedMph * 0.44704).toFixed(2);
+          gpx += `        <speed>${speedMps}</speed>\n`;
+        }
+        gpx += `      </trkpt>\n`;
+      });
+
+      gpx += `    </trkseg>\n  </trk>\n</gpx>`;
+
+      const blob = new Blob([gpx], { type: 'application/gpx+xml;charset=utf-8' });
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const dateTag = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const filename = `NOMAD-TRACK-${dateTag}.gpx`;
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function exportBlackBoxLog() {
