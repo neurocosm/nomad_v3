@@ -181,16 +181,19 @@
       align-items: center;
       justify-content: center;
       user-select: none;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.75);
       transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
 
     .map-overlay-heading {
       top: 8px;
       left: 8px;
-      background: #ffffff;
-      color: #000000;
-      border: 3.5px solid #007aff;
+      background: rgba(12, 16, 26, 0.84);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #ffffff;
+      border: 2.5px solid rgba(0, 195, 255, 0.85);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 195, 255, 0.15);
       cursor: pointer;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       text-align: center;
@@ -199,24 +202,30 @@
 
     .map-overlay-heading:active {
       transform: scale(0.92);
-      border-color: #0056b3;
+      border-color: #00d4ff;
+      box-shadow: 0 0 18px rgba(0, 212, 255, 0.6);
     }
 
     .map-overlay-compass {
       top: 8px;
       right: 8px;
-      background: #ffffff;
-      border: 3.5px solid #007aff;
+      background: rgba(12, 16, 26, 0.84);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 2.5px solid rgba(0, 195, 255, 0.85);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 195, 255, 0.15);
       cursor: pointer;
       padding: 2px;
     }
 
     .map-overlay-compass:active {
       transform: scale(0.92);
+      border-color: #00d4ff;
+      box-shadow: 0 0 18px rgba(0, 212, 255, 0.6);
     }
 
     .map-overlay-compass.active-heading-up {
-      border: 3.5px solid #007aff;
+      border: 2.5px solid rgba(0, 195, 255, 0.85);
     }
 
     .compass-wrapper-overlay {
@@ -310,14 +319,14 @@
     }
     #map-card.hud-scale-large .map-overlay-heading {
       border-radius: 32px;
-      border-width: 4.5px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+      border-width: 3.5px;
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 195, 255, 0.2);
       font-size: 26px; /* Bumped up base font size for the whole pod */
     }
     #map-card.hud-scale-large .map-overlay-compass {
       border-radius: 32px;
-      border-width: 4.5px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+      border-width: 3.5px;
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 195, 255, 0.2);
     }
 
     /* LARGE TIER OVERRIDES FOR TELEMETRY LABEL BALANCE */
@@ -329,9 +338,10 @@
     /* Proportional Typography Classes (Font Weight 700 / 800) */
     .telemetry-circle-val {
       font-size: 2.15em;
-      font-weight: 700;
+      font-weight: 800;
       line-height: 1.0;
-      color: #000000;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
       letter-spacing: -0.5px;
       margin-bottom: 2px;
     }
@@ -339,7 +349,8 @@
     .telemetry-circle-label {
       font-size: 1.2em;
       font-weight: 800;
-      color: #111111;
+      color: #00d4ff;
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
       text-transform: uppercase;
       letter-spacing: 1.5px;
       line-height: 1;
@@ -997,29 +1008,29 @@
         <div class="compass-wrapper-overlay">
           <svg class="compass-rose-svg" viewBox="0 0 100 100">
             <!-- 30° Tactical Chronometer Tick Marks -->
-            <line x1="72" y1="12" x2="69" y2="17" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="88" y1="28" x2="83" y2="31" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="88" y1="72" x2="83" y2="69" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="72" y1="88" x2="69" y2="83" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="28" y1="88" x2="31" y2="83" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="12" y1="72" x2="17" y2="69" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="12" y1="28" x2="17" y2="31" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
-            <line x1="28" y1="12" x2="31" y2="17" stroke="#b0b0ba" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="72" y1="12" x2="69" y2="17" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="88" y1="28" x2="83" y2="31" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="88" y1="72" x2="83" y2="69" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="72" y1="88" x2="69" y2="83" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="28" y1="88" x2="31" y2="83" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="12" y1="72" x2="17" y2="69" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="12" y1="28" x2="17" y2="31" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="28" y1="12" x2="31" y2="17" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
 
             <!-- Outward Anchored Cardinal Text Indicators -->
             <text x="50" y="16" fill="#ff3b30" font-size="13.5" font-weight="900" text-anchor="middle">N</text>
-            <text x="91" y="54" fill="#222222" font-size="11.5" font-weight="900" text-anchor="middle">E</text>
-            <text x="50" y="93" fill="#222222" font-size="11.5" font-weight="900" text-anchor="middle">S</text>
-            <text x="9" y="54" fill="#222222" font-size="11.5" font-weight="900" text-anchor="middle">W</text>
+            <text x="91" y="54" fill="#94a3b8" font-size="11.5" font-weight="900" text-anchor="middle">E</text>
+            <text x="50" y="93" fill="#94a3b8" font-size="11.5" font-weight="900" text-anchor="middle">S</text>
+            <text x="9" y="54" fill="#94a3b8" font-size="11.5" font-weight="900" text-anchor="middle">W</text>
           </svg>
 
           <!-- Precision Dual-Taper Needle -->
           <svg class="compass-needle-svg" id="needle-svg" viewBox="0 0 100 100">
             <polygon points="50,15 44,50 50,47" fill="#ff3b30" />
             <polygon points="50,15 56,50 50,47" fill="#e02b20" />
-            <polygon points="50,85 44,50 50,53" fill="#666666" />
-            <polygon points="50,85 56,50 50,44" fill="#444444" />
-            <circle cx="50" cy="50" r="4.5" fill="#ffffff" stroke="#222222" stroke-width="2.2" />
+            <polygon points="50,85 44,50 50,53" fill="#64748b" />
+            <polygon points="50,85 56,50 50,44" fill="#475569" />
+            <circle cx="50" cy="50" r="4.5" fill="#0f172a" stroke="#00d4ff" stroke-width="2.2" />
           </svg>
         </div>
       </div>
