@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v4';
+const CACHE_NAME = 'nomad-roadtrip-v5-0830';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -12,6 +12,7 @@ const ASSETS_TO_CACHE = [
   './seasons.html',
   './geek-stats.html',
   './manifest.json',
+  './version.js',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
