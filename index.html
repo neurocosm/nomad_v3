@@ -551,10 +551,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 6px;
       width: 100%;
       height: 100%;
       min-height: 0;
+      padding: 4px 0;
     }
 
     .weather-main {
@@ -565,7 +566,7 @@
     }
 
     .weather-temp {
-      font-size: clamp(2.4rem, 8vh, 3.4rem);
+      font-size: clamp(2.6rem, 8.5vh, 3.6rem);
       font-weight: bold;
       line-height: 0.95;
       color: #ffffff;
@@ -585,21 +586,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      font-size: clamp(1.15rem, 3.6vw, 1.4rem);
+      gap: 8px;
+      font-size: clamp(1.25rem, 4.2vw, 1.65rem);
       font-weight: 700;
       color: #ffffff;
       text-align: center;
-      line-height: 1.1;
-      margin-bottom: 4px;
+      line-height: 1.15;
+      margin-bottom: 6px;
     }
 
     .weather-details-stacked {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
-      font-size: clamp(1.05rem, 3.2vw, 1.25rem);
+      gap: 16px;
+      font-size: clamp(1.2rem, 3.8vw, 1.5rem);
       font-weight: 700;
       color: #ffffff;
       white-space: nowrap;
@@ -609,7 +610,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 6px;
     }
 
     .speed-sign-card {
@@ -691,6 +692,41 @@
     .speed-sign.dark-mode-sign .speed-sign-value,
     .speed-sign.dark-mode-sign .speed-sign-unit {
       color: #ffffff;
+    }
+
+    /* SPEED THRESHOLD ALERT PULSE & COLOR STATES */
+    @keyframes speedNearLimitPulse {
+      0%, 100% {
+        color: #ff9500;
+        text-shadow: 0 0 10px rgba(255, 149, 0, 0.6);
+      }
+      50% {
+        color: #ffffff;
+        text-shadow: none;
+      }
+    }
+
+    @keyframes speedOverLimitPulse {
+      0%, 100% {
+        color: #ff3344;
+        text-shadow: 0 0 18px rgba(255, 51, 68, 0.9);
+        transform: scale(1.04);
+      }
+      50% {
+        color: #ffffff;
+        text-shadow: 0 0 4px #ffffff;
+        transform: scale(1.0);
+      }
+    }
+
+    .speed-sign-value.speed-near-limit {
+      color: #ff9500 !important;
+      animation: speedNearLimitPulse 1.2s infinite ease-in-out;
+    }
+
+    .speed-sign-value.speed-over-limit {
+      color: #ff3344 !important;
+      animation: speedOverLimitPulse 0.6s infinite ease-in-out;
     }
 
     /* DYNAMIC ELASTIC MODAL OVERLAYS */
@@ -873,6 +909,14 @@
       cursor: pointer;
     }
 
+    .modal-version-tag {
+      margin-top: 10px;
+      font-size: 0.72rem;
+      font-family: "Courier New", Courier, monospace;
+      color: #666666;
+      letter-spacing: 0.5px;
+    }
+
     .config-section-label {
       font-size: 0.85rem;
       font-weight: 700;
@@ -1005,7 +1049,7 @@
           </div>
           <div class="weather-details-stacked" id="weather-extra">
             <div class="weather-stat-pill">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
               </svg>
               <span id="humidity-val">--%</span>
@@ -1013,7 +1057,7 @@
 
             <div class="weather-stat-pill">
               <span id="uv-icon-wrap">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="4"/>
                   <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
                 </svg>
@@ -1073,6 +1117,7 @@
       <div style="margin-top: 4px;">
         <button class="modal-close-btn" onclick="closeAboutModal()">Close</button>
       </div>
+      <div class="modal-version-tag">v3.08302026.0722</div>
     </div>
   </div>
 
@@ -1186,6 +1231,7 @@
     let isFahrenheit = true;
     let rawSpeedMps = 0;
     let isMph = true;
+    let currentSpeedLimitMph = null; // Live posted speed limit (or inferred based on road type)
 
     const stateAbbreviations = {
       "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
@@ -1477,25 +1523,51 @@
     }
 
     function createInterstateSVG(num) {
+      const clean = String(num).toUpperCase().trim();
+      const fontSize = clean.length > 2 ? '36' : '44';
       return `
         <div class="highway-shield-badge">
-          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.75));">
+          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 3px 8px rgba(0,0,0,0.75)); overflow: visible;">
             <path d="M 50,4 C 65,4 88,14 96,18 C 96,55 82,82 50,96 C 18,82 4,55 4,18 C 12,14 35,4 50,4 Z" fill="#ffffff" stroke="#ffffff" stroke-width="2.5" />
             <path d="M 50,7 C 64,7 86,16 93,20 C 93,28 93,32 93,32 L 7,32 C 7,32 7,28 7,20 C 14,16 36,7 50,7 Z" fill="#cc0000" />
             <path d="M 7,32 L 93,32 C 93,54 80,80 50,93 C 20,80 7,54 7,32 Z" fill="#0033cc" />
-            <text x="50" y="74" fill="#ffffff" font-size="${num.length > 2 ? '36' : '44'}" font-weight="900" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">${num}</text>
+            <text x="50" y="74" fill="#ffffff" font-size="${fontSize}" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" text-anchor="middle">${clean}</text>
           </svg>
         </div>
       `;
     }
 
     function createRouteSVG(num) {
+      const clean = String(num).toUpperCase().trim();
+      let fontSize = '48';
+      let yPos = '66';
+      let letterSpacing = '-0.5px';
+
+      if (clean.length === 1) {
+        fontSize = '54';
+        yPos = '68';
+      } else if (clean.length === 2) {
+        fontSize = '48';
+        yPos = '66';
+      } else if (clean.length === 3) {
+        fontSize = '38';
+        yPos = '63';
+        letterSpacing = '-1px';
+      } else {
+        fontSize = '30';
+        yPos = '61';
+        letterSpacing = '-1px';
+      }
+
       return `
         <div class="highway-shield-badge">
-          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.75));">
-            <rect x="4" y="4" width="92" height="92" rx="18" ry="18" fill="#ffffff" stroke="#000000" stroke-width="8" />
-            <rect x="9" y="9" width="82" height="82" rx="13" ry="13" fill="none" stroke="#ffffff" stroke-width="3.5" />
-            <text x="50" y="66" fill="#000000" font-size="${num.length > 2 ? '38' : '50'}" font-weight="900" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" text-anchor="middle">${num}</text>
+          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 3px 8px rgba(0,0,0,0.75)); overflow: visible;">
+            <!-- Outer Solid Frame with Crisp Black Edge -->
+            <rect x="3" y="3" width="94" height="94" rx="14" ry="14" fill="#ffffff" stroke="#000000" stroke-width="4.5" />
+            <!-- Authentic Inset Thin Hairline Margin -->
+            <rect x="8.5" y="8.5" width="83" height="83" rx="9" ry="9" fill="none" stroke="#000000" stroke-width="1.8" />
+            <!-- Bold Highway Gothic Route Text -->
+            <text x="50" y="${yPos}" fill="#000000" font-size="${fontSize}" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" letter-spacing="${letterSpacing}" text-anchor="middle">${clean}</text>
           </svg>
         </div>
       `;
@@ -1510,15 +1582,41 @@
       return 'West';
     }
 
+    let currentSignedHighwayDirections = {};
+
     function getHighwayDirection(routeNumber, heading) {
       if (heading === null || isNaN(heading)) return '';
-      const cleanNum = routeNumber.toUpperCase().trim();
+      const cleanNum = String(routeNumber).toUpperCase().trim();
       const numericPart = parseInt(cleanNum.replace(/\D/g, ''), 10);
+      if (isNaN(numericPart)) return getCardinalRoadDirection(heading);
+
       const isNorthSouth = (numericPart % 2 !== 0);
-      
-      return isNorthSouth 
-        ? ((heading >= 270 || heading < 90) ? 'North' : 'South')
-        : ((heading >= 0 && heading < 180) ? 'East' : 'West');
+      const norm = (heading % 360 + 360) % 360;
+      const prevDirection = currentSignedHighwayDirections[cleanNum] || null;
+
+      let newDirection = '';
+      if (isNorthSouth) {
+        // Hysteresis deadband: Don't flip North/South on slight bends near East (90°) or West (270°)
+        if (prevDirection === 'North') {
+          newDirection = (norm >= 115 && norm <= 245) ? 'South' : 'North';
+        } else if (prevDirection === 'South') {
+          newDirection = (norm <= 65 || norm >= 295) ? 'North' : 'South';
+        } else {
+          newDirection = (norm >= 270 || norm < 90) ? 'North' : 'South';
+        }
+      } else {
+        // East-West highway (even numbered)
+        if (prevDirection === 'East') {
+          newDirection = (norm >= 205 && norm <= 335) ? 'West' : 'East';
+        } else if (prevDirection === 'West') {
+          newDirection = (norm >= 25 && norm <= 155) ? 'East' : 'West';
+        } else {
+          newDirection = (norm >= 0 && norm < 180) ? 'East' : 'West';
+        }
+      }
+
+      currentSignedHighwayDirections[cleanNum] = newDirection;
+      return newDirection;
     }
 
     function getAdaptiveCardinalLabel(angle) {
@@ -1637,6 +1735,18 @@
       if (modal) modal.classList.remove('active');
     }
 
+    function isValidHighwayRouteNumber(str) {
+      if (!str) return false;
+      const clean = String(str).trim().toUpperCase();
+      // Valid routes are 1 to 3 digits with optional single letter suffix (e.g. 2, 3, 28, 60, 95, 114, 128, 2A, 3A)
+      // Reject 4+ digit numbers (e.g. 8607, 7497, 7697, 8920, 7782 which are MassDOT/state internal inventory codes)
+      if (/^\d{1,3}[A-Z]?$/i.test(clean)) {
+        const numVal = parseInt(clean.replace(/\D/g, ''), 10);
+        return numVal > 0 && numVal < 1000;
+      }
+      return false;
+    }
+
     /* PURE UNIVERSAL OPENSTREETMAP ROUTE & SHIELD PARSER */
     function parseUniversalRoadSignage(data) {
       const addr = data.address || {};
@@ -1655,16 +1765,31 @@
       const tokens = `${rawRef};${rawRoad};${rawName}`.split(/[;,/]+/).map(t => t.trim()).filter(Boolean);
 
       tokens.forEach(token => {
+        // Interstate: e.g. "I 95", "I-95", "Interstate 95"
         const iMatch = token.match(/\b(?:I[- ]?|Interstate\s+|IS[- ]?)(\d{1,3})\b/i);
-        if (iMatch && !interstate) interstate = iMatch[1];
+        if (iMatch && !interstate) {
+          const num = iMatch[1];
+          if (isValidHighwayRouteNumber(num)) interstate = num;
+        }
 
+        // US Route: e.g. "US 3", "US-3", "U.S. Route 3", "US Highway 1"
         const usMatch = token.match(/\b(?:US[- ]?|U\.S\.\s*Route\s*|US\s*Route\s*|US\s*Hwy\s*)(\d{1,3}[A-Z]?)\b/i);
-        if (usMatch && !usRoute) usRoute = usMatch[1];
+        if (usMatch && !usRoute) {
+          const num = usMatch[1];
+          if (isValidHighwayRouteNumber(num)) usRoute = num;
+        }
 
-        const rMatch = token.match(/\b(?:[A-Z]{2}[- ]|Route\s?|Rt\.?\s?|State\s?Hwy\s?|State\s?Route\s?|SR[- ]?)(\d+[A-Z]?)\b/i);
-        if (rMatch && !stateRoute && !interstate && !usRoute) stateRoute = rMatch[1];
+        // State Route: e.g. "Route 60", "Rt 28", "MA 128", "Route 2A", "SR-114"
+        const rMatch = token.match(/\b(?:[A-Z]{2}[- ]|Route\s?|Rt\.?\s?|State\s?Hwy\s?|State\s?Route\s?|SR[- ]?)(\d{1,3}[A-Z]?)\b/i);
+        if (rMatch && !stateRoute) {
+          const num = rMatch[1];
+          if (isValidHighwayRouteNumber(num) && num !== interstate && num !== usRoute) {
+            stateRoute = num;
+          }
+        }
 
-        if (!stateRoute && !interstate && !usRoute && /^\d+[A-Z]?$/i.test(token) && token === rawRef) {
+        // Fallback: If token itself is a clean 1-3 digit route number from rawRef (and NOT a 4-digit inventory code)
+        if (!stateRoute && isValidHighwayRouteNumber(token) && rawRef.includes(token) && token !== interstate && token !== usRoute) {
           stateRoute = token;
         }
       });
@@ -1672,7 +1797,37 @@
       const isLink = /_link$/i.test(highwayType);
       const isMotorway = /motorway|trunk/i.test(highwayType) || interstate !== null;
 
-      return { interstate, usRoute, stateRoute, rawRoad, rawRef, highwayType, isLink, isMotorway };
+      // Extract raw maxspeed if provided by OSM extratags
+      let maxSpeedMph = null;
+      const rawMaxSpeed = extra.maxspeed || "";
+      if (rawMaxSpeed) {
+        if (/mph/i.test(rawMaxSpeed)) {
+          maxSpeedMph = parseInt(rawMaxSpeed.replace(/\D/g, ''), 10);
+        } else if (/km\/h|kmh/i.test(rawMaxSpeed)) {
+          const kmh = parseInt(rawMaxSpeed.replace(/\D/g, ''), 10);
+          if (!isNaN(kmh)) maxSpeedMph = Math.round(kmh * 0.621371);
+        } else {
+          const num = parseInt(rawMaxSpeed, 10);
+          if (!isNaN(num)) maxSpeedMph = num;
+        }
+      }
+
+      // If no explicit maxspeed tag, derive standard statutory road classification limit
+      if (!maxSpeedMph || isNaN(maxSpeedMph)) {
+        if (interstate !== null || isMotorway) {
+          maxSpeedMph = 65; // Standard interstate / expressway posted limit
+        } else if (usRoute !== null) {
+          maxSpeedMph = 55; // Standard US highway / divided route
+        } else if (stateRoute !== null) {
+          maxSpeedMph = 50; // Standard state route / regional arterial
+        } else if (/primary|secondary/i.test(highwayType)) {
+          maxSpeedMph = 40; // Major arterial avenue / thoroughfare
+        } else if (/tertiary|residential/i.test(highwayType)) {
+          maxSpeedMph = 30; // Standard local street
+        }
+      }
+
+      return { interstate, usRoute, stateRoute, rawRoad, rawRef, highwayType, isLink, isMotorway, maxSpeedMph };
     }
 
     /* Floating Multi-Stage Total Recall Toast Engine */
@@ -2113,17 +2268,35 @@
       if (rawSpeedMps === null || isNaN(rawSpeedMps) || rawSpeedMps < 0) {
         speedValueEl.innerText = '0';
         speedUnitEl.innerText = isMph ? 'MPH' : 'KM/H';
+        speedValueEl.classList.remove('speed-near-limit', 'speed-over-limit');
         return;
       }
 
+      const liveMph = Math.round(rawSpeedMps * 2.23694);
       if (isMph) {
-        const mph = Math.round(rawSpeedMps * 2.23694);
-        speedValueEl.innerText = mph;
+        speedValueEl.innerText = liveMph;
         speedUnitEl.innerText = 'MPH';
       } else {
         const kmh = Math.round(rawSpeedMps * 3.6);
         speedValueEl.innerText = kmh;
         speedUnitEl.innerText = 'KM/H';
+      }
+
+      // SPEED LIMIT ALERT LOGIC
+      // If live speed is within [limit - 3, limit], flash orange.
+      // If live speed strictly exceeds the limit (e.g. > 55 or > 65), flash red.
+      if (currentSpeedLimitMph && currentSpeedLimitMph > 0 && liveMph >= 15) {
+        if (liveMph > currentSpeedLimitMph) {
+          speedValueEl.classList.remove('speed-near-limit');
+          speedValueEl.classList.add('speed-over-limit');
+        } else if (liveMph >= (currentSpeedLimitMph - 3)) {
+          speedValueEl.classList.remove('speed-over-limit');
+          speedValueEl.classList.add('speed-near-limit');
+        } else {
+          speedValueEl.classList.remove('speed-near-limit', 'speed-over-limit');
+        }
+      } else {
+        speedValueEl.classList.remove('speed-near-limit', 'speed-over-limit');
       }
     }
 
@@ -2144,12 +2317,12 @@
 
     function getWeatherInfo(code) {
       const icons = {
-        sun: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-        cloudSun: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.94 11.23a5 5 0 0 0-8.92 2.12 3.5 3.5 0 0 0 .98 6.65h8a4 4 0 0 0 .94-7.77z" stroke="#a0a0a0"/></svg>`,
-        cloud: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8.5a7 7 0 0 1-1.2-13.8 8 8 0 0 1 14.8 2.3 4.5 4.5 0 0 1-.6 11.5Z"/></svg>`,
-        rain: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"/><path d="M8 13v8"/><path d="M12 15v8"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" stroke="#a0a0a0"/></svg>`,
-        thunder: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffd54f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
-        snow: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`
+        sun: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+        cloudSun: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.94 11.23a5 5 0 0 0-8.92 2.12 3.5 3.5 0 0 0 .98 6.65h8a4 4 0 0 0 .94-7.77z" stroke="#a0a0a0"/></svg>`,
+        cloud: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8.5a7 7 0 0 1-1.2-13.8 8 8 0 0 1 14.8 2.3 4.5 4.5 0 0 1-.6 11.5Z"/></svg>`,
+        rain: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"/><path d="M8 13v8"/><path d="M12 15v8"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" stroke="#a0a0a0"/></svg>`,
+        thunder: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffd54f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+        snow: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`
       };
       const weatherMap = {
         0: { text: "Clear Sky", icon: icons.sun },
@@ -2309,7 +2482,12 @@
           hasInitialGeocode = true;
 
           const addr = data ? data.address : {};
-          const { interstate, usRoute, stateRoute, rawRoad, isLink, isMotorway } = data ? parseUniversalRoadSignage(data) : { interstate: null, usRoute: null, stateRoute: null, rawRoad: secondaryFallback?.street || "", isLink: false, isMotorway: false };
+          const { interstate, usRoute, stateRoute, rawRoad, isLink, isMotorway, maxSpeedMph } = data ? parseUniversalRoadSignage(data) : { interstate: null, usRoute: null, stateRoute: null, rawRoad: secondaryFallback?.street || "", isLink: false, isMotorway: false, maxSpeedMph: null };
+
+          if (maxSpeedMph && !isNaN(maxSpeedMph)) {
+            currentSpeedLimitMph = maxSpeedMph;
+            renderSpeed();
+          }
 
           const isTrueHighway = isMotorway || interstate !== null;
 
@@ -2343,31 +2521,48 @@
           if (isHighwayLocked) {
             if (interstate) {
               candidateRoadName = `I-${interstate}`;
-              if (usRoute) candidateRoadName += ` / US-${usRoute}`;
-              else if (stateRoute) candidateRoadName += ` / Route ${stateRoute}`;
+              if (usRoute && usRoute !== interstate) {
+                candidateRoadName += ` / US-${usRoute}`;
+              } else if (stateRoute && stateRoute !== interstate && isValidHighwayRouteNumber(stateRoute)) {
+                candidateRoadName += ` / Route ${stateRoute}`;
+              }
               if (currentHeading !== null && !isNaN(currentHeading)) {
                 candidateRoadName = `${candidateRoadName} ${getHighwayDirection(interstate, currentHeading)}`;
               }
             } else if (usRoute) {
               candidateRoadName = `US-${usRoute}`;
-              if (stateRoute) candidateRoadName += ` / Route ${stateRoute}`;
+              if (stateRoute && stateRoute !== usRoute && isValidHighwayRouteNumber(stateRoute)) {
+                candidateRoadName += ` / Route ${stateRoute}`;
+              }
               if (currentHeading !== null && !isNaN(currentHeading)) {
                 candidateRoadName = `${candidateRoadName} ${getHighwayDirection(usRoute, currentHeading)}`;
               }
+            } else if (stateRoute && isValidHighwayRouteNumber(stateRoute)) {
+              candidateRoadName = `Route ${stateRoute}`;
+              if (currentHeading !== null && !isNaN(currentHeading)) {
+                candidateRoadName = `${candidateRoadName} ${getHighwayDirection(stateRoute, currentHeading)}`;
+              }
             } else {
-              candidateRoadName = rawRoad || lastValidDisplayTitle || "Highway";
+              if (lastValidInterstate && (/Yankee Division/i.test(rawRoad) || !rawRoad)) {
+                candidateRoadName = `I-${lastValidInterstate}`;
+                if (currentHeading !== null && !isNaN(currentHeading)) {
+                  candidateRoadName = `${candidateRoadName} ${getHighwayDirection(lastValidInterstate, currentHeading)}`;
+                }
+              } else {
+                candidateRoadName = rawRoad || lastValidDisplayTitle || "Highway";
+              }
             }
-          } else if (rawRoad && !/^Route\s*\d+/i.test(rawRoad) && !/^Unnamed/i.test(rawRoad)) {
+          } else if (rawRoad && !/^Route\s*\d+/i.test(rawRoad) && !/^Unnamed/i.test(rawRoad) && !/Yankee Division/i.test(rawRoad)) {
             // Local street name has highest fidelity (e.g., "Waverley Oaks Road", "Lincoln Street", "Beaver Street")
             candidateRoadName = rawRoad;
             const isExpressway = /\b(Turnpike|Tpk|Expressway|Parkway|Pkwy|Hwy|Highway)\b/i.test(candidateRoadName);
             if (isExpressway && currentHeading !== null && !isNaN(currentHeading)) {
               candidateRoadName = `${candidateRoadName} ${getCardinalRoadDirection(currentHeading)}`;
             }
-          } else if (stateRoute) {
+          } else if (stateRoute && isValidHighwayRouteNumber(stateRoute)) {
             candidateRoadName = `Route ${stateRoute}`;
             if (currentHeading !== null && !isNaN(currentHeading)) {
-              candidateRoadName = `${candidateRoadName} ${getCardinalRoadDirection(currentHeading)}`;
+              candidateRoadName = `${candidateRoadName} ${getHighwayDirection(stateRoute, currentHeading)}`;
             }
           } else if (usRoute) {
             candidateRoadName = `US-${usRoute}`;
@@ -2420,7 +2615,7 @@
           }
 
           currentInterstateShield = isHighwayLocked ? (interstate || lastValidInterstate) : interstate;
-          currentRouteShield = isHighwayLocked ? (usRoute || stateRoute || lastValidRouteShield) : (usRoute || stateRoute);
+          currentRouteShield = usRoute || (stateRoute && isValidHighwayRouteNumber(stateRoute) ? stateRoute : null);
 
           if (currentInterstateShield) lastValidInterstate = currentInterstateShield;
           if (currentRouteShield) lastValidRouteShield = currentRouteShield;
@@ -2540,7 +2735,7 @@
             else if (uv >= 8) uvColor = '#ff3b30';
 
             document.getElementById('uv-icon-wrap').innerHTML = `
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${uvColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${uvColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="4"/>
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
               </svg>
