@@ -196,12 +196,12 @@
     .map-overlay-heading {
       top: 8px;
       left: 8px;
-      background: rgba(12, 16, 26, 0.84);
+      background: rgba(12, 16, 26, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: #ffffff;
-      border: 2.5px solid rgba(0, 195, 255, 0.85);
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 195, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
       cursor: pointer;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       text-align: center;
@@ -210,30 +210,30 @@
 
     .map-overlay-heading:active {
       transform: scale(0.92);
-      border-color: #00d4ff;
-      box-shadow: 0 0 18px rgba(0, 212, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
     }
 
     .map-overlay-compass {
       top: 8px;
       right: 8px;
-      background: rgba(12, 16, 26, 0.84);
+      background: rgba(12, 16, 26, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 2.5px solid rgba(0, 195, 255, 0.85);
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 195, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
       cursor: pointer;
       padding: 2px;
     }
 
     .map-overlay-compass:active {
       transform: scale(0.92);
-      border-color: #00d4ff;
-      box-shadow: 0 0 18px rgba(0, 212, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
     }
 
     .map-overlay-compass.active-heading-up {
-      border: 2.5px solid rgba(0, 195, 255, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.25);
     }
 
     .compass-wrapper-overlay {
@@ -490,14 +490,16 @@
     }
     #map-card.hud-scale-4 .map-overlay-heading {
       border-radius: 28px;
-      border-width: 3px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(0, 195, 255, 0.18);
+      border-width: 2.5px;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 12px rgba(255, 255, 255, 0.08);
       font-size: 19px;
     }
     #map-card.hud-scale-4 .map-overlay-compass {
       border-radius: 28px;
-      border-width: 3px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(0, 195, 255, 0.18);
+      border-width: 2.5px;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 12px rgba(255, 255, 255, 0.08);
     }
 
     /* TIER 5: LARGE (Original Large Quad) */
@@ -515,15 +517,17 @@
     #map-card.hud-scale-5 .map-overlay-heading,
     #map-card.hud-scale-large .map-overlay-heading {
       border-radius: 32px;
-      border-width: 3.5px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 195, 255, 0.2);
+      border-width: 3px;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(255, 255, 255, 0.08);
       font-size: 26px; /* Bumped up base font size for the whole pod */
     }
     #map-card.hud-scale-5 .map-overlay-compass,
     #map-card.hud-scale-large .map-overlay-compass {
       border-radius: 32px;
-      border-width: 3.5px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 195, 255, 0.2);
+      border-width: 3px;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(255, 255, 255, 0.08);
     }
 
     /* TIER 4 & 5 OVERRIDES FOR TELEMETRY LABEL BALANCE */
@@ -548,8 +552,8 @@
     .telemetry-circle-label {
       font-size: 1.2em;
       font-weight: 800;
-      color: #00d4ff;
-      text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+      color: #e2e8f0;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
       text-transform: uppercase;
       letter-spacing: 1.5px;
       line-height: 1;
@@ -1312,7 +1316,7 @@
             <polygon points="50,15 56,50 50,47" fill="#e02b20" />
             <polygon points="50,85 44,50 50,53" fill="#64748b" />
             <polygon points="50,85 56,50 50,44" fill="#475569" />
-            <circle cx="50" cy="50" r="4.5" fill="#0f172a" stroke="#00d4ff" stroke-width="2.2" />
+            <circle cx="50" cy="50" r="4.5" fill="#0f172a" stroke="#cbd5e1" stroke-width="2.2" />
           </svg>
         </div>
       </div>
@@ -1583,8 +1587,8 @@
     let currentPitch = 58;
 
     const mapThemes = [
-      { name: 'Blueprint Vector (Dark)', type: 'blueprint-dark', darkSign: true },
-      { name: 'Blueprint Vector (Light)', type: 'blueprint-light', darkSign: false },
+      { name: 'Natural Dark Navigation', type: 'blueprint-dark', darkSign: true },
+      { name: 'Natural Light Navigation', type: 'blueprint-light', darkSign: false },
       { name: 'Amber Cosmic Starfield', type: 'kinetic-starfield', darkSign: true },
       { name: 'Dark Matter (Night)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', darkSign: true },
       { name: 'Positron (Neutral Light)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', darkSign: false }
@@ -1601,33 +1605,38 @@
         }
         const style = JSON.parse(JSON.stringify(cachedDarkMatterStyle));
         style.layers.forEach(layer => {
-          // Water with crisp blue perimeter
-          if (layer.id === 'water') {
+          // Base background
+          if (layer.id === 'background') {
+            layer.paint = layer.paint || {};
+            layer.paint['background-color'] = '#12161f';
+          }
+          // Water with natural rich deep navy/ocean blue
+          else if (layer.id === 'water') {
             layer.paint = {
-              'fill-color': '#041224',
-              'fill-outline-color': '#0099ff',
+              'fill-color': '#132845',
+              'fill-outline-color': '#1d3e68',
               'fill-opacity': 0.95
             };
           } else if (layer.id === 'waterway') {
             layer.paint = {
-              'line-color': '#00b4d8',
-              'line-width': 2.2
+              'line-color': '#2563eb',
+              'line-width': 2.0
             };
           }
-          // Landmasses / Parks / Natural reserves with green outline
-          else if (layer.id === 'landcover' || layer.id === 'landuse' || layer.id === 'landuse_residential' || layer.id.startsWith('park_')) {
+          // Landmasses / Parks / Natural reserves with natural dark forest green
+          else if (layer.id === 'landcover' || layer.id === 'landuse' || layer.id === 'landuse_residential' || layer.id.startsWith('park_') || layer.id === 'park') {
             layer.paint = {
-              'fill-color': '#071810',
-              'fill-outline-color': '#00e676',
-              'fill-opacity': 0.7
+              'fill-color': '#142419',
+              'fill-outline-color': '#1b3824',
+              'fill-opacity': 0.85
             };
           }
-          // Buildings & Structures with blueprint cyan outline & dark slate fill
+          // Buildings & Structures with subtle architectural charcoal (clean & non-distracting)
           else if (layer.id === 'building' || layer.id === 'building-top') {
             layer.paint = {
-              'fill-color': '#0a192f',
-              'fill-outline-color': '#00f0ff',
-              'fill-opacity': 0.92
+              'fill-color': '#1a222e',
+              'fill-outline-color': '#283446',
+              'fill-opacity': 0.85
             };
           }
           // Roads: High-contrast crisp white roads with dark outer cases
@@ -1637,7 +1646,7 @@
             layer.paint['line-opacity'] = 1.0;
           } else if (layer.id.startsWith('road_') && layer.id.endsWith('_case')) {
             layer.paint = layer.paint || {};
-            layer.paint['line-color'] = '#020617';
+            layer.paint['line-color'] = '#050914';
           }
         });
         return style;
