@@ -1,6 +1,6 @@
 // NOMAD Central Version Registry
 // Edit this single line at the end of a session to update the version across all pages and modals.
-window.NOMAD_VERSION = "v3.08302026.0722";
+window.NOMAD_VERSION = "v3.08302026.0924";
 
 function applyNomadVersion() {
   const version = window.NOMAD_VERSION || "v3.0";

@@ -24,7 +24,14 @@
   <!-- Version Single Source of Truth -->
   <script src="version.js"></script>
   
+  <!-- Decoupled Sensory Starfield Kinetic Console Module -->
+  <script src="kinetic-console.js"></script>
+  
   <style>
+    :root {
+      --hud-badge-opacity: 1;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -182,7 +189,8 @@
       justify-content: center;
       user-select: none;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.75);
-      transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+      opacity: var(--hud-badge-opacity, 1);
+      transition: opacity 0.15s ease, transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), width 0.25s cubic-bezier(0.25, 0.1, 0.25, 1), height 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
 
     .map-overlay-heading {
@@ -274,10 +282,149 @@
     }
 
     /* ------------------------------------------------------------- */
-    /* DYNAMIC HUD GAUGE SCALING & PROPORTIONAL TYPOGRAPHY           */
+    /* STARFIELD SENSORY CONSOLE MINIMALIST HUD OVERLAYS             */
+    /* ------------------------------------------------------------- */
+    #map-card.is-starfield-mode .map-overlay-heading {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      color: #ffffff !important;
+      padding: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      top: 10px !important;
+      left: 12px !important;
+      width: auto !important;
+      height: auto !important;
+      pointer-events: none;
+    }
+
+    #map-card.is-starfield-mode .telemetry-circle-val {
+      font-size: 1.15rem !important;
+      font-weight: 500 !important;
+      color: #ffffff !important;
+      line-height: 1 !important;
+      letter-spacing: 0.5px !important;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+    }
+
+    #map-card.is-starfield-mode .telemetry-circle-label {
+      display: none !important;
+    }
+
+    /* Minimalist Top-Center Fullscreen Toggle (Arrows only, no squircle) */
+    #map-card.is-starfield-mode .map-overlay-fullscreen {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      min-height: unset !important;
+      padding: 2px !important;
+      top: 9px !important;
+    }
+
+    #map-card.is-starfield-mode .map-overlay-fullscreen svg {
+      width: 15px !important;
+      height: 15px !important;
+      stroke: #ffffff !important;
+      opacity: 0.85;
+      filter: drop-shadow(0 1px 4px rgba(0,0,0,0.9));
+    }
+
+    /* Top-Right: Clean lightweight white cardinal letter perfectly in corner */
+    #map-card.is-starfield-mode .map-overlay-compass {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      top: 10px !important;
+      right: 12px !important;
+      width: auto !important;
+      height: auto !important;
+      display: flex !important;
+      align-items: flex-start !important;
+      justify-content: flex-end !important;
+      padding: 0 !important;
+      pointer-events: none;
+    }
+
+    #map-card.is-starfield-mode .compass-wrapper-overlay {
+      display: none !important;
+    }
+
+    #map-card.is-starfield-mode .map-overlay-compass::after {
+      content: attr(data-cardinal);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 1.15rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      line-height: 1;
+      color: #ffffff;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+      text-transform: uppercase;
+    }
+
+    #map-card.is-starfield-mode .vehicle-overlay-marker {
+      display: none !important;
+    }
+
+    /* Minimalist Route Shields in Starfield Mode */
+    #map-card.is-starfield-mode .map-overlay-interstate,
+    #map-card.is-starfield-mode .map-overlay-route {
+      filter: drop-shadow(0 0 10px rgba(255, 183, 3, 0.4));
+      opacity: 0.85;
+      bottom: 10px !important;
+    }
+
+    /* Starfield Return-to-Map Icon-Only Button (Center-Bottom, Compact) */
+    .starfield-map-return-btn {
+      display: none;
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(18, 9, 4, 0.85);
+      border: 1.2px solid #ffb703;
+      color: #ffe8d6;
+      box-shadow: 0 0 10px rgba(251, 133, 0, 0.3), inset 0 0 4px rgba(255, 183, 3, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.15s ease, background 0.2s, box-shadow 0.2s;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .starfield-map-return-btn:active {
+      transform: translateX(-50%) scale(0.85);
+      background: #ffb703;
+      color: #080402;
+      box-shadow: 0 0 16px #ffb703;
+    }
+
+    #map-card.is-starfield-mode .starfield-map-return-btn {
+      display: flex;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* 5-TIER DYNAMIC HUD GAUGE SCALING & PROPORTIONAL TYPOGRAPHY    */
     /* ------------------------------------------------------------- */
     
-    /* TIER 1: SMALL */
+    /* TIER 1: SMALL (Original Small) */
+    #map-card.hud-scale-1 .map-overlay-heading,
+    #map-card.hud-scale-1 .map-overlay-compass,
+    #map-card.hud-scale-1 .map-overlay-interstate,
+    #map-card.hud-scale-1 .map-overlay-route,
     #map-card.hud-scale-small .map-overlay-heading,
     #map-card.hud-scale-small .map-overlay-compass,
     #map-card.hud-scale-small .map-overlay-interstate,
@@ -285,15 +432,37 @@
       width: 62px;
       height: 62px;
     }
+    #map-card.hud-scale-1 .map-overlay-heading,
     #map-card.hud-scale-small .map-overlay-heading {
       border-radius: 18px;
       font-size: 9px;
     }
+    #map-card.hud-scale-1 .map-overlay-compass,
     #map-card.hud-scale-small .map-overlay-compass {
       border-radius: 18px;
     }
 
-    /* TIER 2: MEDIUM (Default Balanced) */
+    /* TIER 2: SMALL-MEDIUM (New In-Between Tier) */
+    #map-card.hud-scale-2 .map-overlay-heading,
+    #map-card.hud-scale-2 .map-overlay-compass,
+    #map-card.hud-scale-2 .map-overlay-interstate,
+    #map-card.hud-scale-2 .map-overlay-route {
+      width: 74px;
+      height: 74px;
+    }
+    #map-card.hud-scale-2 .map-overlay-heading {
+      border-radius: 21px;
+      font-size: 11px;
+    }
+    #map-card.hud-scale-2 .map-overlay-compass {
+      border-radius: 21px;
+    }
+
+    /* TIER 3: MEDIUM (Original Medium / Balanced Default) */
+    #map-card.hud-scale-3 .map-overlay-heading,
+    #map-card.hud-scale-3 .map-overlay-compass,
+    #map-card.hud-scale-3 .map-overlay-interstate,
+    #map-card.hud-scale-3 .map-overlay-route,
     #map-card.hud-scale-medium .map-overlay-heading,
     #map-card.hud-scale-medium .map-overlay-compass,
     #map-card.hud-scale-medium .map-overlay-interstate,
@@ -301,35 +470,65 @@
       width: 86px;
       height: 86px;
     }
+    #map-card.hud-scale-3 .map-overlay-heading,
     #map-card.hud-scale-medium .map-overlay-heading {
       border-radius: 24px;
       font-size: 13px;
     }
+    #map-card.hud-scale-3 .map-overlay-compass,
     #map-card.hud-scale-medium .map-overlay-compass {
       border-radius: 24px;
     }
 
-    /* TIER 3: LARGE (Full-Quadrant Dominance) */
+    /* TIER 4: MEDIUM-LARGE (New In-Between Tier) */
+    #map-card.hud-scale-4 .map-overlay-heading,
+    #map-card.hud-scale-4 .map-overlay-compass,
+    #map-card.hud-scale-4 .map-overlay-interstate,
+    #map-card.hud-scale-4 .map-overlay-route {
+      width: clamp(100px, 30vw, 114px);
+      height: clamp(100px, 30vw, 114px);
+    }
+    #map-card.hud-scale-4 .map-overlay-heading {
+      border-radius: 28px;
+      border-width: 3px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(0, 195, 255, 0.18);
+      font-size: 19px;
+    }
+    #map-card.hud-scale-4 .map-overlay-compass {
+      border-radius: 28px;
+      border-width: 3px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(0, 195, 255, 0.18);
+    }
+
+    /* TIER 5: LARGE (Original Large Quad) */
+    #map-card.hud-scale-5 .map-overlay-heading,
+    #map-card.hud-scale-5 .map-overlay-compass,
+    #map-card.hud-scale-5 .map-overlay-interstate,
+    #map-card.hud-scale-5 .map-overlay-route,
     #map-card.hud-scale-large .map-overlay-heading,
     #map-card.hud-scale-large .map-overlay-compass,
     #map-card.hud-scale-large .map-overlay-interstate,
     #map-card.hud-scale-large .map-overlay-route {
-      width: clamp(114px, 35vw, 150px);
-      height: clamp(114px, 35vw, 150px);
+      width: clamp(118px, 36vw, 150px);
+      height: clamp(118px, 36vw, 150px);
     }
+    #map-card.hud-scale-5 .map-overlay-heading,
     #map-card.hud-scale-large .map-overlay-heading {
       border-radius: 32px;
       border-width: 3.5px;
       box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 195, 255, 0.2);
       font-size: 26px; /* Bumped up base font size for the whole pod */
     }
+    #map-card.hud-scale-5 .map-overlay-compass,
     #map-card.hud-scale-large .map-overlay-compass {
       border-radius: 32px;
       border-width: 3.5px;
       box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 195, 255, 0.2);
     }
 
-    /* LARGE TIER OVERRIDES FOR TELEMETRY LABEL BALANCE */
+    /* TIER 4 & 5 OVERRIDES FOR TELEMETRY LABEL BALANCE */
+    #map-card.hud-scale-4 .telemetry-circle-label,
+    #map-card.hud-scale-5 .telemetry-circle-label,
     #map-card.hud-scale-large .telemetry-circle-label {
       font-size: 1.25em;
       letter-spacing: 1.5px;
@@ -565,11 +764,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: clamp(7px, 1.6vh, 12px);
       width: 100%;
       height: 100%;
       min-height: 0;
-      padding: 4px 0;
+      padding: 4px 6px;
+      box-sizing: border-box;
     }
 
     .weather-main {
@@ -577,18 +777,20 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: clamp(6px, 1.4vh, 9px);
+      width: 100%;
     }
 
     .weather-temp {
-      font-size: clamp(2.6rem, 8.5vh, 3.6rem);
-      font-weight: bold;
+      font-size: clamp(2.4rem, 7.8vh, 3.4rem);
+      font-weight: 800;
       line-height: 0.95;
       color: #ffffff;
       cursor: pointer;
       user-select: none;
       transition: opacity 0.15s ease, transform 0.15s ease;
       touch-action: manipulation;
-      margin-bottom: 6px;
+      margin: 0;
     }
 
     .weather-temp:active {
@@ -600,31 +802,33 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: clamp(1.25rem, 4.2vw, 1.65rem);
+      gap: 6px;
+      font-size: clamp(0.95rem, 3.2vw, 1.18rem);
       font-weight: 700;
       color: #ffffff;
       text-align: center;
       line-height: 1.15;
-      margin-bottom: 6px;
+      white-space: nowrap;
+      margin: 0;
     }
 
     .weather-details-stacked {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      font-size: clamp(1.2rem, 3.8vw, 1.5rem);
+      gap: 14px;
+      font-size: clamp(0.95rem, 3.0vw, 1.15rem);
       font-weight: 700;
       color: #ffffff;
       white-space: nowrap;
+      margin: 0;
     }
 
     .weather-stat-pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .speed-sign-card {
@@ -708,39 +912,15 @@
       color: #ffffff;
     }
 
-    /* SPEED THRESHOLD ALERT PULSE & COLOR STATES */
-    @keyframes speedNearLimitPulse {
-      0%, 100% {
-        color: #ff9500;
-        text-shadow: 0 0 10px rgba(255, 149, 0, 0.6);
-      }
-      50% {
-        color: #ffffff;
-        text-shadow: none;
-      }
-    }
-
-    @keyframes speedOverLimitPulse {
-      0%, 100% {
-        color: #ff3344;
-        text-shadow: 0 0 18px rgba(255, 51, 68, 0.9);
-        transform: scale(1.04);
-      }
-      50% {
-        color: #ffffff;
-        text-shadow: 0 0 4px #ffffff;
-        transform: scale(1.0);
-      }
-    }
-
+    /* SPEED THRESHOLD ALERT COLOR STATES (SOLID & NON-PULSING) */
     .speed-sign-value.speed-near-limit {
-      color: #ff9500 !important;
-      animation: speedNearLimitPulse 1.2s infinite ease-in-out;
+      color: #30d158 !important;
+      text-shadow: 0 0 10px rgba(48, 209, 88, 0.45);
     }
 
     .speed-sign-value.speed-over-limit {
-      color: #ff3344 !important;
-      animation: speedOverLimitPulse 0.6s infinite ease-in-out;
+      color: #ff3b30 !important;
+      text-shadow: 0 0 12px rgba(255, 59, 48, 0.6);
     }
 
     /* DYNAMIC ELASTIC MODAL OVERLAYS */
@@ -971,6 +1151,108 @@
       font-weight: 900;
       box-shadow: 0 0 8px rgba(76, 217, 100, 0.35);
     }
+
+    /* Semi-transparent live-preview modal overlay for HUD Config */
+    #hud-scale-modal {
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    #hud-scale-modal .modal-box {
+      background: rgba(22, 22, 24, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+
+    /* HUD Corner Badges Config Slider & Controls */
+    .slider-config-container {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: left;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .slider-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .slider-val-badge {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #00d4ff;
+      background: rgba(0, 212, 255, 0.15);
+      border: 1px solid rgba(0, 212, 255, 0.35);
+      border-radius: 6px;
+      padding: 2px 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .slider-track-wrap {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+    }
+
+    .hud-range-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #333333;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .hud-range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #00d4ff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .hud-range-slider::-webkit-slider-thumb:active {
+      transform: scale(1.15);
+      box-shadow: 0 0 16px rgba(0, 212, 255, 1);
+    }
+
+    .hud-range-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #00d4ff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+      cursor: pointer;
+    }
+
+    .slider-ticks-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #777777;
+      margin-top: 6px;
+      letter-spacing: 0.2px;
+    }
+
   </style>
 </head>
 <body>
@@ -1048,6 +1330,15 @@
         </svg>
       </div>
 
+      <!-- Starfield Mode Dedicated Return-to-Map Icon-Only Button -->
+      <div class="starfield-map-return-btn" id="starfield-map-return-btn" title="Return to Map">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+      </div>
+
       <div id="map"></div>
     </div>
 
@@ -1063,15 +1354,15 @@
           </div>
           <div class="weather-details-stacked" id="weather-extra">
             <div class="weather-stat-pill">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                 <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
               </svg>
               <span id="humidity-val">--%</span>
             </div>
 
             <div class="weather-stat-pill">
-              <span id="uv-icon-wrap">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <span id="uv-icon-wrap" style="display: inline-flex; align-items: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                   <circle cx="12" cy="12" r="4"/>
                   <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
                 </svg>
@@ -1093,19 +1384,51 @@
     </div>
   </div>
 
-  <!-- HUD GAUGE SCALE CONFIG MODAL OVERLAY -->
+  <!-- HUD GAUGE SCALE & TRANSPARENCY CONFIG MODAL OVERLAY -->
   <div class="modal-overlay" id="hud-scale-modal" onclick="closeHudScaleModal(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
-      <div class="modal-title">HUD Gauge Scale</div>
-      <div class="modal-body" style="margin-bottom: 14px;">
-        Select the size for corner telemetry, compass, and highway shields.
+      <div class="modal-title">Corner Badges &amp; HUD</div>
+      <div class="modal-body" style="margin-bottom: 16px;">
+        Adjust size and transparency for the 4 corner gauges and highway shields.
       </div>
 
-      <div class="config-section-label">Gauge Layout</div>
-      <div class="config-pill-grid" style="grid-template-columns: repeat(3, 1fr);" id="hud-scale-pill-grid">
-        <button class="config-pill-btn" onclick="setHudScale('small')">Small</button>
-        <button class="config-pill-btn" onclick="setHudScale('medium')">Medium</button>
-        <button class="config-pill-btn" onclick="setHudScale('large')">Large (Quad)</button>
+      <!-- Size Slider -->
+      <div class="slider-config-container">
+        <div class="slider-header-row">
+          <span class="config-section-label" style="margin:0;">Badge Size</span>
+          <span class="slider-val-badge" id="hud-scale-val-label">Level 3 (Medium)</span>
+        </div>
+        <div class="slider-track-wrap">
+          <input type="range" min="1" max="5" step="1" id="hud-scale-slider" class="hud-range-slider" oninput="onHudScaleSliderChange(this.value)">
+        </div>
+        <div class="slider-ticks-row">
+          <span>1: Small</span>
+          <span>2: Sm-Med</span>
+          <span>3: Med</span>
+          <span>4: Med-Lg</span>
+          <span>5: Large</span>
+        </div>
+      </div>
+
+      <!-- Transparency / Opacity Slider -->
+      <div class="slider-config-container" style="margin-top: 14px;">
+        <div class="slider-header-row">
+          <span class="config-section-label" style="margin:0;">Transparency</span>
+          <span class="slider-val-badge" id="hud-opacity-val-label">100% Solid</span>
+        </div>
+        <div class="slider-track-wrap">
+          <input type="range" min="20" max="100" step="5" id="hud-opacity-slider" class="hud-range-slider" oninput="onHudOpacitySliderChange(this.value)">
+        </div>
+        <div class="slider-ticks-row">
+          <span>20% Sheer</span>
+          <span>50% Glass</span>
+          <span>75% Muted</span>
+          <span>100% Solid</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 18px;">
+        <button class="modal-close-btn" onclick="closeHudScaleModal()">Done</button>
       </div>
     </div>
   </div>
@@ -1216,8 +1539,32 @@
     let lastPositionUpdateLat = null;
     let lastPositionUpdateLon = null;
 
-    // HUD Gauge Sizing (small, medium, large)
-    let hudScale = localStorage.getItem('nomad_hud_scale') || 'medium';
+    // HUD Gauge Sizing (1..5) & Opacity (20..100)
+    let hudScale = normalizeHudScale(localStorage.getItem('nomad_hud_scale') || 3);
+    let hudOpacity = parseInt(localStorage.getItem('nomad_hud_opacity') || '100', 10);
+    if (isNaN(hudOpacity) || hudOpacity < 20 || hudOpacity > 100) hudOpacity = 100;
+
+    function normalizeHudScale(scale) {
+      if (scale === 'small' || scale === '1' || scale === 1) return 1;
+      if (scale === 'small-medium' || scale === 'small-med' || scale === '2' || scale === 2) return 2;
+      if (scale === 'medium' || scale === '3' || scale === 3) return 3;
+      if (scale === 'medium-large' || scale === 'med-large' || scale === '4' || scale === 4) return 4;
+      if (scale === 'large' || scale === '5' || scale === 5) return 5;
+      const num = parseInt(scale, 10);
+      if (!isNaN(num) && num >= 1 && num <= 5) return num;
+      return 3;
+    }
+
+    function getHudScaleName(lvl) {
+      switch(lvl) {
+        case 1: return 'Level 1 (Small)';
+        case 2: return 'Level 2 (Sm-Med)';
+        case 3: return 'Level 3 (Medium)';
+        case 4: return 'Level 4 (Med-Lg)';
+        case 5: return 'Level 5 (Large)';
+        default: return `Level ${lvl}`;
+      }
+    }
 
     let isGalagaMode = false;
     let audioCtx = null;
@@ -1236,10 +1583,114 @@
     let currentPitch = 58;
 
     const mapThemes = [
-      { name: 'Dark Matter (Night)', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', darkSign: true },
-      { name: 'Positron (Neutral Light)', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', darkSign: false }
+      { name: 'Blueprint Vector (Dark)', type: 'blueprint-dark', darkSign: true },
+      { name: 'Blueprint Vector (Light)', type: 'blueprint-light', darkSign: false },
+      { name: 'Amber Cosmic Starfield', type: 'kinetic-starfield', darkSign: true },
+      { name: 'Dark Matter (Night)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', darkSign: true },
+      { name: 'Positron (Neutral Light)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', darkSign: false }
     ];
     let currentThemeIndex = 0;
+    let cachedDarkMatterStyle = null;
+    let cachedPositronStyle = null;
+
+    async function getMapStyleObject(theme) {
+      if (theme.type === 'blueprint-dark') {
+        if (!cachedDarkMatterStyle) {
+          const res = await fetch('https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json');
+          cachedDarkMatterStyle = await res.json();
+        }
+        const style = JSON.parse(JSON.stringify(cachedDarkMatterStyle));
+        style.layers.forEach(layer => {
+          // Water with crisp blue perimeter
+          if (layer.id === 'water') {
+            layer.paint = {
+              'fill-color': '#041224',
+              'fill-outline-color': '#0099ff',
+              'fill-opacity': 0.95
+            };
+          } else if (layer.id === 'waterway') {
+            layer.paint = {
+              'line-color': '#00b4d8',
+              'line-width': 2.2
+            };
+          }
+          // Landmasses / Parks / Natural reserves with green outline
+          else if (layer.id === 'landcover' || layer.id === 'landuse' || layer.id === 'landuse_residential' || layer.id.startsWith('park_')) {
+            layer.paint = {
+              'fill-color': '#071810',
+              'fill-outline-color': '#00e676',
+              'fill-opacity': 0.7
+            };
+          }
+          // Buildings & Structures with blueprint cyan outline & dark slate fill
+          else if (layer.id === 'building' || layer.id === 'building-top') {
+            layer.paint = {
+              'fill-color': '#0a192f',
+              'fill-outline-color': '#00f0ff',
+              'fill-opacity': 0.92
+            };
+          }
+          // Roads: High-contrast crisp white roads with dark outer cases
+          else if (layer.id.startsWith('road_') && layer.id.endsWith('_fill')) {
+            layer.paint = layer.paint || {};
+            layer.paint['line-color'] = '#ffffff';
+            layer.paint['line-opacity'] = 1.0;
+          } else if (layer.id.startsWith('road_') && layer.id.endsWith('_case')) {
+            layer.paint = layer.paint || {};
+            layer.paint['line-color'] = '#020617';
+          }
+        });
+        return style;
+      } else if (theme.type === 'blueprint-light') {
+        if (!cachedPositronStyle) {
+          const res = await fetch('https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
+          cachedPositronStyle = await res.json();
+        }
+        const style = JSON.parse(JSON.stringify(cachedPositronStyle));
+        style.layers.forEach(layer => {
+          // Water
+          if (layer.id === 'water') {
+            layer.paint = {
+              'fill-color': '#d2e8ff',
+              'fill-outline-color': '#0066cc',
+              'fill-opacity': 0.95
+            };
+          } else if (layer.id === 'waterway') {
+            layer.paint = {
+              'line-color': '#0077b6',
+              'line-width': 2.2
+            };
+          }
+          // Landmasses / Parks
+          else if (layer.id === 'landcover' || layer.id === 'landuse' || layer.id === 'landuse_residential' || layer.id.startsWith('park_')) {
+            layer.paint = {
+              'fill-color': '#d4f2dc',
+              'fill-outline-color': '#008a3e',
+              'fill-opacity': 0.75
+            };
+          }
+          // Buildings
+          else if (layer.id === 'building' || layer.id === 'building-top') {
+            layer.paint = {
+              'fill-color': '#e2ecf7',
+              'fill-outline-color': '#0055aa',
+              'fill-opacity': 0.95
+            };
+          }
+          // Roads
+          else if (layer.id.startsWith('road_') && layer.id.endsWith('_fill')) {
+            layer.paint = layer.paint || {};
+            layer.paint['line-color'] = '#ffffff';
+            layer.paint['line-opacity'] = 1.0;
+          } else if (layer.id.startsWith('road_') && layer.id.endsWith('_case')) {
+            layer.paint = layer.paint || {};
+            layer.paint['line-color'] = '#334155';
+          }
+        });
+        return style;
+      }
+      return theme.url;
+    }
 
     let rawTempF = null;
     let isFahrenheit = true;
@@ -1263,6 +1714,7 @@
     function abbreviateStreetName(streetName) {
       if (!streetName) return '';
       return streetName
+        .replace(/\b(?:Route|State Route|State Hwy|SR)\s+(\d{1,3}[A-Z]?)\b/gi, '$1')
         .replace(/\bStreet\b/gi, 'St.')
         .replace(/\bAvenue\b/gi, 'Ave.')
         .replace(/\bRoad\b/gi, 'Rd.')
@@ -1536,55 +1988,104 @@
       }
     }
 
-    function createInterstateSVG(num) {
+    function createInterstateSVG(num, direction = '') {
       const clean = String(num).toUpperCase().trim();
       const fontSize = clean.length > 2 ? '36' : '44';
+
+      let dirDot = '';
+      if (direction === 'North') {
+        dirDot = '<circle cx="50" cy="11.5" r="3" fill="#ffffff" stroke="#cc0000" stroke-width="1" />';
+      } else if (direction === 'South') {
+        dirDot = '<circle cx="50" cy="87.5" r="3" fill="#ffffff" stroke="#0033cc" stroke-width="1" />';
+      } else if (direction === 'East') {
+        dirDot = '<circle cx="88" cy="50" r="3" fill="#ffffff" stroke="#0033cc" stroke-width="1" />';
+      } else if (direction === 'West') {
+        dirDot = '<circle cx="12" cy="50" r="3" fill="#ffffff" stroke="#0033cc" stroke-width="1" />';
+      }
+
       return `
         <div class="highway-shield-badge">
-          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 3px 8px rgba(0,0,0,0.75)); overflow: visible;">
+          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85)); overflow: visible;">
             <path d="M 50,4 C 65,4 88,14 96,18 C 96,55 82,82 50,96 C 18,82 4,55 4,18 C 12,14 35,4 50,4 Z" fill="#ffffff" stroke="#ffffff" stroke-width="2.5" />
             <path d="M 50,7 C 64,7 86,16 93,20 C 93,28 93,32 93,32 L 7,32 C 7,32 7,28 7,20 C 14,16 36,7 50,7 Z" fill="#cc0000" />
             <path d="M 7,32 L 93,32 C 93,54 80,80 50,93 C 20,80 7,54 7,32 Z" fill="#0033cc" />
+            ${dirDot}
             <text x="50" y="74" fill="#ffffff" font-size="${fontSize}" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" text-anchor="middle">${clean}</text>
           </svg>
         </div>
       `;
     }
 
-    function createRouteSVG(num) {
+    function createRouteSVG(num, direction = '') {
       const clean = String(num).toUpperCase().trim();
-      let fontSize = '48';
-      let yPos = '66';
+      let fontSize = '50';
+      let yPos = '68';
       let letterSpacing = '-0.5px';
 
       if (clean.length === 1) {
-        fontSize = '54';
-        yPos = '68';
+        fontSize = '56';
+        yPos = '69';
       } else if (clean.length === 2) {
-        fontSize = '48';
-        yPos = '66';
+        fontSize = '50';
+        yPos = '68';
       } else if (clean.length === 3) {
         fontSize = '38';
-        yPos = '63';
+        yPos = '64';
         letterSpacing = '-1px';
       } else {
         fontSize = '30';
-        yPos = '61';
+        yPos = '62';
         letterSpacing = '-1px';
+      }
+
+      let dirDot = '';
+      if (direction === 'North') {
+        dirDot = '<circle cx="50" cy="13.5" r="3.2" fill="#000000" />';
+      } else if (direction === 'South') {
+        dirDot = '<circle cx="50" cy="86.5" r="3.2" fill="#000000" />';
+      } else if (direction === 'East') {
+        dirDot = '<circle cx="86.5" cy="50" r="3.2" fill="#000000" />';
+      } else if (direction === 'West') {
+        dirDot = '<circle cx="13.5" cy="50" r="3.2" fill="#000000" />';
       }
 
       return `
         <div class="highway-shield-badge">
-          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 3px 8px rgba(0,0,0,0.75)); overflow: visible;">
-            <!-- Outer Solid Frame with Crisp Black Edge -->
-            <rect x="3" y="3" width="94" height="94" rx="14" ry="14" fill="#ffffff" stroke="#000000" stroke-width="4.5" />
-            <!-- Authentic Inset Thin Hairline Margin -->
-            <rect x="8.5" y="8.5" width="83" height="83" rx="9" ry="9" fill="none" stroke="#000000" stroke-width="1.8" />
-            <!-- Bold Highway Gothic Route Text -->
+          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85)); overflow: visible;">
+            <!-- Outer Solid White Plate with Rounded Corners & Deep Black Border -->
+            <rect x="2.5" y="2.5" width="95" height="95" rx="14" ry="14" fill="#ffffff" stroke="#000000" stroke-width="4.5" />
+            <!-- Authentic MUTCD Inset Hairline Margin -->
+            <rect x="7.5" y="7.5" width="85" height="85" rx="9" ry="9" fill="none" stroke="#000000" stroke-width="1.8" />
+            <!-- Directional Indicator Dot -->
+            ${dirDot}
+            <!-- Bold Highway Route Typography -->
             <text x="50" y="${yPos}" fill="#000000" font-size="${fontSize}" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" letter-spacing="${letterSpacing}" text-anchor="middle">${clean}</text>
           </svg>
         </div>
       `;
+    }
+
+    function renderRouteBadges() {
+      const interstateContainer = document.getElementById('interstate-badge-container');
+      const routeContainer = document.getElementById('route-badge-container');
+
+      if (interstateContainer) {
+        if (currentInterstateShield) {
+          const dir = getHighwayDirection(currentInterstateShield, currentHeading);
+          interstateContainer.innerHTML = createInterstateSVG(currentInterstateShield, dir);
+        } else {
+          interstateContainer.innerHTML = '';
+        }
+      }
+
+      if (routeContainer) {
+        if (currentRouteShield) {
+          const dir = getHighwayDirection(currentRouteShield, currentHeading);
+          routeContainer.innerHTML = createRouteSVG(currentRouteShield, dir);
+        } else {
+          routeContainer.innerHTML = '';
+        }
+      }
     }
 
     function getCardinalRoadDirection(heading) {
@@ -1651,10 +2152,23 @@
       }
     }
 
+    function getFullCardinalWord(angle) {
+      if (angle === null || isNaN(angle)) return 'NORTH';
+      const norm = ((Math.round(angle) % 360) + 360) % 360;
+      const octant = Math.round(norm / 45) % 8;
+      const words = ['NORTH', 'NORTHEAST', 'EAST', 'SOUTHEAST', 'SOUTH', 'SOUTHWEST', 'WEST', 'NORTHWEST'];
+      return words[octant];
+    }
+
     /* Renders Harmonized Proportional Telemetry Data (Weight 700) */
     function renderTelemetryBadge() {
       if (isHornBadgeActive) return;
       const badgeEl = document.getElementById('heading-text');
+      const compassBtn = document.getElementById('compass-btn');
+      if (compassBtn) {
+        const cardinalLetter = getCardinalDirection(currentHeading);
+        compassBtn.setAttribute('data-cardinal', cardinalLetter);
+      }
       if (!badgeEl) return;
       badgeEl.classList.remove('general-lee-active', 'galaga-fire-active');
       badgeEl.style.borderColor = '';
@@ -1702,43 +2216,75 @@
       }
     }
 
-    /* HUD GAUGE SCALE CONTROLLER */
+    /* HUD GAUGE SCALE & OPACITY CONTROLLER */
     function applyHudScale(scale) {
-      hudScale = scale;
-      localStorage.setItem('nomad_hud_scale', scale);
+      const level = normalizeHudScale(scale);
+      hudScale = level;
+      localStorage.setItem('nomad_hud_scale', level);
 
       const mapCard = document.getElementById('map-card');
       if (mapCard) {
-        mapCard.classList.remove('hud-scale-small', 'hud-scale-medium', 'hud-scale-large');
-        mapCard.classList.add(`hud-scale-${scale}`);
+        mapCard.classList.remove(
+          'hud-scale-small', 'hud-scale-medium', 'hud-scale-large',
+          'hud-scale-1', 'hud-scale-2', 'hud-scale-3', 'hud-scale-4', 'hud-scale-5'
+        );
+        mapCard.classList.add(`hud-scale-${level}`);
+        if (level === 1) mapCard.classList.add('hud-scale-small');
+        if (level === 3) mapCard.classList.add('hud-scale-medium');
+        if (level === 5) mapCard.classList.add('hud-scale-large');
       }
 
       renderTelemetryBadge();
-      syncHudScaleModalPills();
+      syncHudScaleModal();
+    }
+
+    function applyHudOpacity(opacity) {
+      let val = parseInt(opacity, 10);
+      if (isNaN(val)) val = 100;
+      val = Math.max(20, Math.min(100, val));
+      hudOpacity = val;
+      localStorage.setItem('nomad_hud_opacity', val);
+
+      const alpha = (val / 100).toFixed(2);
+      document.documentElement.style.setProperty('--hud-badge-opacity', alpha);
+
+      syncHudOpacityModal();
+    }
+
+    function onHudScaleSliderChange(val) {
+      applyHudScale(val);
+    }
+
+    function onHudOpacitySliderChange(val) {
+      applyHudOpacity(val);
     }
 
     function setHudScale(scale) {
       applyHudScale(scale);
-      setTimeout(() => {
-        closeHudScaleModal();
-      }, 150);
     }
 
-    function syncHudScaleModalPills() {
-      const modal = document.getElementById('hud-scale-modal');
-      if (!modal) return;
-      const btns = modal.querySelectorAll('#hud-scale-pill-grid .config-pill-btn');
-      btns.forEach(btn => {
-        const text = btn.innerText.toLowerCase();
-        if (hudScale === 'large' && text.includes('large')) btn.classList.add('active');
-        else if (hudScale === 'medium' && text.includes('medium')) btn.classList.add('active');
-        else if (hudScale === 'small' && text.includes('small')) btn.classList.add('active');
-        else btn.classList.remove('active');
-      });
+    function syncHudScaleModal() {
+      const slider = document.getElementById('hud-scale-slider');
+      const valLabel = document.getElementById('hud-scale-val-label');
+      if (slider) slider.value = hudScale;
+      if (valLabel) valLabel.innerText = getHudScaleName(hudScale);
+    }
+
+    function syncHudOpacityModal() {
+      const slider = document.getElementById('hud-opacity-slider');
+      const valLabel = document.getElementById('hud-opacity-val-label');
+      if (slider) slider.value = hudOpacity;
+      if (valLabel) {
+        if (hudOpacity >= 95) valLabel.innerText = `${hudOpacity}% (Solid)`;
+        else if (hudOpacity >= 70) valLabel.innerText = `${hudOpacity}% (Muted)`;
+        else if (hudOpacity >= 45) valLabel.innerText = `${hudOpacity}% (Glass)`;
+        else valLabel.innerText = `${hudOpacity}% (Sheer)`;
+      }
     }
 
     function openHudScaleModal() {
-      syncHudScaleModalPills();
+      syncHudScaleModal();
+      syncHudOpacityModal();
       const modal = document.getElementById('hud-scale-modal');
       if (modal) modal.classList.add('active');
     }
@@ -2194,15 +2740,60 @@
         clearTimeout(vehiclePressTimer);
         if (!isVehicleLongPress) toggleMapStyle(e);
       });
+
+      // Starfield dedicated Return-to-Map button
+      const starfieldMapReturnBtn = document.getElementById('starfield-map-return-btn');
+      if (starfieldMapReturnBtn) {
+        starfieldMapReturnBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleMapStyle(e);
+        });
+        starfieldMapReturnBtn.addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          toggleMapStyle(e);
+        });
+      }
     }
 
-    function toggleMapStyle(event) {
+    async function toggleMapStyle(event) {
       if (event) event.stopPropagation();
       currentThemeIndex = (currentThemeIndex + 1) % mapThemes.length;
       const theme = mapThemes[currentThemeIndex];
-      if (map) {
-        map.setStyle(theme.url);
-        map.resize();
+      const mapEl = document.getElementById('map');
+      const mapCard = document.getElementById('map-card');
+      const vehicleSvg = document.getElementById('vehicle-overlay-svg');
+
+      if (theme.type === 'kinetic-starfield') {
+        if (mapCard) mapCard.classList.add('is-starfield-mode');
+        if (mapEl) mapEl.style.display = 'none';
+        if (window.KineticConsole) {
+          window.KineticConsole.show();
+          const currentMph = (rawSpeedMps !== null && !isNaN(rawSpeedMps)) ? (rawSpeedMps * 2.23694) : 0;
+          window.KineticConsole.updateTelemetry({
+            speedMph: currentMph,
+            heading: currentHeading,
+            altitude: rawAltitudeMeters ? rawAltitudeMeters * 3.28084 : 0,
+            pitch: currentPitch
+          });
+        }
+      } else {
+        if (mapCard) mapCard.classList.remove('is-starfield-mode');
+        if (window.KineticConsole) {
+          window.KineticConsole.hide();
+        }
+        if (mapEl) {
+          mapEl.style.display = 'block';
+        }
+        if (map) {
+          const styleObj = await getMapStyleObject(theme);
+          map.setStyle(styleObj);
+          map.resize();
+        }
+        if (vehicleSvg && !isGalagaMode) {
+          vehicleSvg.setAttribute('fill', '#007aff');
+          vehicleSvg.setAttribute('stroke', '#ffffff');
+        }
       }
 
       const speedSignBox = document.getElementById('speed-sign-box');
@@ -2296,11 +2887,12 @@
         speedUnitEl.innerText = 'KM/H';
       }
 
-      // SPEED LIMIT ALERT LOGIC
-      // If live speed is within [limit - 3, limit], flash orange.
-      // If live speed strictly exceeds the limit (e.g. > 55 or > 65), flash red.
+      // SPEED LIMIT ALERT LOGIC (Solid Colors, Zero Pulsing)
+      // When cruising safely at/around the limit (limit - 3 up to limit + 3, e.g. 52-58 in a 55 MPH zone): Solid Green.
+      // When exceeding the limit buffer (> limit + 3, e.g. 59+ in a 55 MPH zone): Solid Red.
+      // When cruising well below (e.g. < 52 in 55 zone) or under 15 MPH: Neutral Default (White/Black).
       if (currentSpeedLimitMph && currentSpeedLimitMph > 0 && liveMph >= 15) {
-        if (liveMph > currentSpeedLimitMph) {
+        if (liveMph > (currentSpeedLimitMph + 3)) {
           speedValueEl.classList.remove('speed-near-limit');
           speedValueEl.classList.add('speed-over-limit');
         } else if (liveMph >= (currentSpeedLimitMph - 3)) {
@@ -2331,12 +2923,12 @@
 
     function getWeatherInfo(code) {
       const icons = {
-        sun: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-        cloudSun: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.94 11.23a5 5 0 0 0-8.92 2.12 3.5 3.5 0 0 0 .98 6.65h8a4 4 0 0 0 .94-7.77z" stroke="#a0a0a0"/></svg>`,
-        cloud: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8.5a7 7 0 0 1-1.2-13.8 8 8 0 0 1 14.8 2.3 4.5 4.5 0 0 1-.6 11.5Z"/></svg>`,
-        rain: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"/><path d="M8 13v8"/><path d="M12 15v8"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" stroke="#a0a0a0"/></svg>`,
-        thunder: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffd54f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
-        snow: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`
+        sun: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+        cloudSun: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M12 2v2" stroke="#ffcc00"/><path d="m4.93 4.93 1.41 1.41" stroke="#ffcc00"/><path d="M20 12h2" stroke="#ffcc00"/><path d="m19.07 4.93-1.41 1.41" stroke="#ffcc00"/><path d="M15.94 11.23a5 5 0 0 0-8.92 2.12 3.5 3.5 0 0 0 .98 6.65h8a4 4 0 0 0 .94-7.77z" stroke="#cbd5e1"/></svg>`,
+        cloud: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M17.5 19H8.5a7 7 0 0 1-1.2-13.8 8 8 0 0 1 14.8 2.3 4.5 4.5 0 0 1-.6 11.5Z"/></svg>`,
+        rain: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M16 13v8"/><path d="M8 13v8"/><path d="M12 15v8"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" stroke="#cbd5e1"/></svg>`,
+        thunder: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffd54f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+        snow: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`
       };
       const weatherMap = {
         0: { text: "Clear Sky", icon: icons.sun },
@@ -2354,10 +2946,18 @@
       return weatherMap[code] || { text: "Fair", icon: icons.cloudSun };
     }
 
-    function initMap() {
+    async function initMap() {
+      const mapCard = document.getElementById('map-card');
+      if (window.KineticConsole && mapCard) {
+        window.KineticConsole.init(mapCard);
+      }
+
+      const initialTheme = mapThemes[currentThemeIndex];
+      const styleObj = await getMapStyleObject(initialTheme);
+
       map = new maplibregl.Map({
         container: 'map',
-        style: mapThemes[currentThemeIndex].url,
+        style: styleObj,
         center: [-71.2356, 42.3765],
         zoom: 16.0,
         bearing: 0,
@@ -2538,7 +3138,7 @@
               if (usRoute && usRoute !== interstate) {
                 candidateRoadName += ` / US-${usRoute}`;
               } else if (stateRoute && stateRoute !== interstate && isValidHighwayRouteNumber(stateRoute)) {
-                candidateRoadName += ` / Route ${stateRoute}`;
+                candidateRoadName += ` / ${stateRoute}`;
               }
               if (currentHeading !== null && !isNaN(currentHeading)) {
                 candidateRoadName = `${candidateRoadName} ${getHighwayDirection(interstate, currentHeading)}`;
@@ -2546,13 +3146,13 @@
             } else if (usRoute) {
               candidateRoadName = `US-${usRoute}`;
               if (stateRoute && stateRoute !== usRoute && isValidHighwayRouteNumber(stateRoute)) {
-                candidateRoadName += ` / Route ${stateRoute}`;
+                candidateRoadName += ` / ${stateRoute}`;
               }
               if (currentHeading !== null && !isNaN(currentHeading)) {
                 candidateRoadName = `${candidateRoadName} ${getHighwayDirection(usRoute, currentHeading)}`;
               }
             } else if (stateRoute && isValidHighwayRouteNumber(stateRoute)) {
-              candidateRoadName = `Route ${stateRoute}`;
+              candidateRoadName = `${stateRoute}`;
               if (currentHeading !== null && !isNaN(currentHeading)) {
                 candidateRoadName = `${candidateRoadName} ${getHighwayDirection(stateRoute, currentHeading)}`;
               }
@@ -2574,7 +3174,7 @@
               candidateRoadName = `${candidateRoadName} ${getCardinalRoadDirection(currentHeading)}`;
             }
           } else if (stateRoute && isValidHighwayRouteNumber(stateRoute)) {
-            candidateRoadName = `Route ${stateRoute}`;
+            candidateRoadName = `${stateRoute}`;
             if (currentHeading !== null && !isNaN(currentHeading)) {
               candidateRoadName = `${candidateRoadName} ${getHighwayDirection(stateRoute, currentHeading)}`;
             }
@@ -2634,11 +3234,7 @@
           if (currentInterstateShield) lastValidInterstate = currentInterstateShield;
           if (currentRouteShield) lastValidRouteShield = currentRouteShield;
 
-          const interstateContainer = document.getElementById('interstate-badge-container');
-          interstateContainer.innerHTML = currentInterstateShield ? createInterstateSVG(currentInterstateShield) : '';
-
-          const routeContainer = document.getElementById('route-badge-container');
-          routeContainer.innerHTML = currentRouteShield ? createRouteSVG(currentRouteShield) : '';
+          renderRouteBadges();
 
           let fullStreetAddress = '';
           if (isHighwayLocked || currentInterstateShield) {
@@ -2749,7 +3345,7 @@
             else if (uv >= 8) uvColor = '#ff3b30';
 
             document.getElementById('uv-icon-wrap').innerHTML = `
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${uvColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${uvColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                 <circle cx="12" cy="12" r="4"/>
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
               </svg>
@@ -2775,6 +3371,16 @@
         }
         pushHeadingHistory(heading);
         renderTelemetryBadge();
+        renderRouteBadges();
+
+        if (window.KineticConsole && window.KineticConsole.isVisible) {
+          window.KineticConsole.updateTelemetry({
+            speedMph: speedMph,
+            heading: heading,
+            altitude: rawAltitudeMeters ? rawAltitudeMeters * 3.28084 : 0,
+            pitch: currentPitch
+          });
+        }
 
         const vehicleSvg = document.getElementById('vehicle-overlay-svg');
         if (vehicleSvg) {
@@ -2849,6 +3455,14 @@
             }
 
             renderSpeed();
+            if (window.KineticConsole && window.KineticConsole.isVisible) {
+              window.KineticConsole.updateTelemetry({
+                speedMph: speedMph,
+                heading: currentHeading,
+                altitude: rawAltitudeMeters ? rawAltitudeMeters * 3.28084 : 0,
+                pitch: currentPitch
+              });
+            }
             updateMapCamera(lngLat);
 
             fetchLocationDetails(latitude, longitude, speed);
@@ -2873,6 +3487,7 @@
     window.onload = () => {
       initMap();
       applyHudScale(hudScale);
+      applyHudOpacity(hudOpacity);
       startTracking();
       requestWakeLock();
       setupInteractions();

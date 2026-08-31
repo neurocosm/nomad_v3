@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v6-08302026';
+const CACHE_NAME = 'nomad-roadtrip-v9-08302026';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -13,6 +13,7 @@ const ASSETS_TO_CACHE = [
   './geek-stats.html',
   './manifest.json',
   './version.js',
+  './kinetic-console.js',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
