@@ -157,6 +157,41 @@
       transform: translateY(0);
     }
 
+    .map-theme-toast {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: rgba(12, 16, 26, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 30;
+      white-space: nowrap;
+      transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .map-theme-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .map-theme-toast.is-starfield {
+      background: rgba(18, 9, 4, 0.94);
+      border: 1.5px solid rgba(255, 183, 3, 0.7);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 14px rgba(251, 133, 0, 0.35);
+      color: #ffe8d6;
+    }
+
     /* Map Box Row */
     #map-card {
       grid-row: 2;
@@ -384,7 +419,7 @@
     .starfield-map-return-btn {
       display: none;
       position: absolute;
-      bottom: 10px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 25;
@@ -400,9 +435,15 @@
       cursor: pointer;
       user-select: none;
       touch-action: manipulation;
-      transition: transform 0.15s ease, background 0.2s, box-shadow 0.2s;
+      transition: opacity 0.35s ease, transform 0.15s ease, background 0.2s, box-shadow 0.2s;
       align-items: center;
       justify-content: center;
+      opacity: 1;
+    }
+
+    .starfield-map-return-btn.hidden-by-toast {
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
 
     .starfield-map-return-btn:active {
@@ -608,23 +649,60 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 12;
-      background: rgba(0, 0, 0, 0.85);
-      border: 2px solid #555555;
+      background: rgba(12, 16, 26, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
       border-radius: 8px;
-      padding: 6px 10px;
-      min-height: 42px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      padding: 4px 7px;
+      min-height: 28px;
+      width: 32px;
+      height: 28px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+      opacity: var(--hud-badge-opacity, 1);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       user-select: none;
-      transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s;
+      transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, opacity 0.15s ease;
     }
 
     .map-overlay-fullscreen:active {
-      transform: translateX(-50%) scale(0.92);
+      transform: translateX(-50%) scale(0.90);
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+    }
+
+    .hud-fullscreen-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .hud-fullscreen-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .hud-fullscreen-pill-btn:active {
+      transform: scale(0.95);
+    }
+
+    .hud-fullscreen-pill-btn.is-active {
+      background: rgba(0, 122, 255, 0.22);
       border-color: #007aff;
+      color: #60a5fa;
     }
 
     /* Floating Multi-Stage Total Recall Banner */
@@ -1283,8 +1361,8 @@
       </div>
 
       <!-- Top-Center Overlay: Fullscreen Toggle Button -->
-      <div class="map-overlay-fullscreen" id="fullscreen-btn">
-        <svg id="fullscreen-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="map-overlay-fullscreen" id="fullscreen-btn" title="Toggle Immersive Fullscreen">
+        <svg id="fullscreen-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
         </svg>
       </div>
@@ -1342,6 +1420,9 @@
           <line x1="16" y1="6" x2="16" y2="22"/>
         </svg>
       </div>
+
+      <!-- Ephemeral Map Theme Name Toast (Center Bottom) -->
+      <div class="map-theme-toast" id="map-theme-toast">Natural Dark Navigation</div>
 
       <div id="map"></div>
     </div>
@@ -1428,6 +1509,22 @@
           <span>50% Glass</span>
           <span>75% Muted</span>
           <span>100% Solid</span>
+        </div>
+      </div>
+
+      <!-- Display Mode / Fullscreen Section -->
+      <div class="slider-config-container" style="margin-top: 14px;">
+        <div class="slider-header-row" style="align-items: center; margin-bottom: 0;">
+          <div>
+            <div class="config-section-label" style="margin:0; font-size: 0.88rem;">Display Mode</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Immersive fullscreen &amp; wake-lock</div>
+          </div>
+          <button id="modal-fullscreen-toggle-btn" class="hud-fullscreen-pill-btn" onclick="toggleFullScreen(event)">
+            <svg id="modal-fullscreen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -1px;">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+            <span id="modal-fullscreen-label">Fullscreen</span>
+          </button>
         </div>
       </div>
 
@@ -1594,6 +1691,12 @@
       { name: 'Positron (Neutral Light)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', darkSign: false }
     ];
     let currentThemeIndex = 0;
+    try {
+      const savedTheme = parseInt(localStorage.getItem('nomad_map_theme_index') || '0', 10);
+      if (!isNaN(savedTheme) && savedTheme >= 0 && savedTheme < mapThemes.length) {
+        currentThemeIndex = savedTheme;
+      }
+    } catch(e) {}
     let cachedDarkMatterStyle = null;
     let cachedPositronStyle = null;
 
@@ -2294,6 +2397,7 @@
     function openHudScaleModal() {
       syncHudScaleModal();
       syncHudOpacityModal();
+      syncFullscreenIcon();
       const modal = document.getElementById('hud-scale-modal');
       if (modal) modal.classList.add('active');
     }
@@ -2459,13 +2563,28 @@
     }
 
     function syncFullscreenIcon() {
-      const icon = document.getElementById('fullscreen-icon');
-      if (!icon) return;
       const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      if (isFull) {
-        icon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />';
-      } else {
-        icon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />';
+      const icon = document.getElementById('fullscreen-icon');
+      if (icon) {
+        if (isFull) {
+          icon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />';
+        } else {
+          icon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />';
+        }
+      }
+      const modalBtn = document.getElementById('modal-fullscreen-toggle-btn');
+      const modalIcon = document.getElementById('modal-fullscreen-icon');
+      const modalLabel = document.getElementById('modal-fullscreen-label');
+      if (modalBtn && modalLabel && modalIcon) {
+        if (isFull) {
+          modalBtn.classList.add('is-active');
+          modalIcon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />';
+          modalLabel.innerText = 'Exit Fullscreen';
+        } else {
+          modalBtn.classList.remove('is-active');
+          modalIcon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />';
+          modalLabel.innerText = 'Fullscreen';
+        }
       }
       requestWakeLock();
     }
@@ -2765,10 +2884,51 @@
       }
     }
 
+    let mapThemeToastTimeout = null;
+    let starfieldBtnTimeout = null;
+
+    function showMapThemeToast(theme) {
+      const toast = document.getElementById('map-theme-toast');
+      const starfieldBtn = document.getElementById('starfield-map-return-btn');
+      if (!toast) return;
+
+      if (mapThemeToastTimeout) clearTimeout(mapThemeToastTimeout);
+      if (starfieldBtnTimeout) clearTimeout(starfieldBtnTimeout);
+
+      toast.innerText = theme.name;
+
+      if (theme.type === 'kinetic-starfield') {
+        toast.classList.add('is-starfield');
+        if (starfieldBtn) {
+          starfieldBtn.classList.add('hidden-by-toast');
+        }
+      } else {
+        toast.classList.remove('is-starfield');
+        if (starfieldBtn) {
+          starfieldBtn.classList.remove('hidden-by-toast');
+        }
+      }
+
+      toast.classList.add('show');
+
+      mapThemeToastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+        if (theme.type === 'kinetic-starfield' && starfieldBtn) {
+          starfieldBtnTimeout = setTimeout(() => {
+            starfieldBtn.classList.remove('hidden-by-toast');
+          }, 180);
+        }
+      }, 1900);
+    }
+
     async function toggleMapStyle(event) {
       if (event) event.stopPropagation();
       currentThemeIndex = (currentThemeIndex + 1) % mapThemes.length;
+      try {
+        localStorage.setItem('nomad_map_theme_index', currentThemeIndex);
+      } catch(e) {}
       const theme = mapThemes[currentThemeIndex];
+      showMapThemeToast(theme);
       const mapEl = document.getElementById('map');
       const mapCard = document.getElementById('map-card');
       const vehicleSvg = document.getElementById('vehicle-overlay-svg');
@@ -2962,6 +3122,12 @@
       }
 
       const initialTheme = mapThemes[currentThemeIndex];
+      if (initialTheme.type === 'kinetic-starfield') {
+        if (mapCard) mapCard.classList.add('is-starfield-mode');
+        const mapEl = document.getElementById('map');
+        if (mapEl) mapEl.style.display = 'none';
+        if (window.KineticConsole) window.KineticConsole.show();
+      }
       const styleObj = await getMapStyleObject(initialTheme);
 
       map = new maplibregl.Map({
