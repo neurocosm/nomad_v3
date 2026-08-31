@@ -579,10 +579,10 @@
       letter-spacing: 1.5px;
     }
 
-    /* Proportional Typography Classes (Font Weight 700 / 800) */
+    /* Proportional Typography Classes (Font Weight 600 Refined) */
     .telemetry-circle-val {
       font-size: 2.15em;
-      font-weight: 800;
+      font-weight: 600;
       line-height: 1.0;
       color: #ffffff;
       text-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
@@ -592,7 +592,7 @@
 
     .telemetry-circle-label {
       font-size: 1.2em;
-      font-weight: 800;
+      font-weight: 600;
       color: #e2e8f0;
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
       text-transform: uppercase;
@@ -672,37 +672,6 @@
       transform: translateX(-50%) scale(0.90);
       border-color: rgba(255, 255, 255, 0.6);
       box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-    }
-
-    .hud-fullscreen-pill-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      color: #f1f5f9;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-
-    .hud-fullscreen-pill-btn:hover {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.35);
-    }
-
-    .hud-fullscreen-pill-btn:active {
-      transform: scale(0.95);
-    }
-
-    .hud-fullscreen-pill-btn.is-active {
-      background: rgba(0, 122, 255, 0.22);
-      border-color: #007aff;
-      color: #60a5fa;
     }
 
     /* Floating Multi-Stage Total Recall Banner */
@@ -818,7 +787,7 @@
 
     .street-value {
       font-size: 2.7rem;
-      font-weight: bold;
+      font-weight: 600;
       line-height: 1.05;
       color: #ffffff;
       margin-bottom: 4px;
@@ -829,14 +798,14 @@
     .sub-value-large {
       font-size: clamp(1.45rem, 4.6vw, 1.85rem);
       color: #eeeeee;
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1.2;
       margin-top: 2px;
     }
 
     .sub-value-meta {
       font-size: clamp(1.2rem, 3.8vw, 1.45rem);
-      font-weight: 600;
+      font-weight: 500;
       line-height: 1.2;
       margin-top: 2px;
     }
@@ -865,7 +834,7 @@
 
     .weather-temp {
       font-size: clamp(2.4rem, 7.8vh, 3.4rem);
-      font-weight: 800;
+      font-weight: 600;
       line-height: 0.95;
       color: #ffffff;
       cursor: pointer;
@@ -886,7 +855,7 @@
       justify-content: center;
       gap: 6px;
       font-size: clamp(0.95rem, 3.2vw, 1.18rem);
-      font-weight: 700;
+      font-weight: 600;
       color: #ffffff;
       text-align: center;
       line-height: 1.15;
@@ -900,7 +869,7 @@
       justify-content: center;
       gap: 14px;
       font-size: clamp(0.95rem, 3.0vw, 1.15rem);
-      font-weight: 700;
+      font-weight: 600;
       color: #ffffff;
       white-space: nowrap;
       margin: 0;
@@ -964,7 +933,7 @@
     .speed-sign-title,
     .speed-sign-unit {
       font-size: clamp(0.9rem, 2.8vw, 1.2rem);
-      font-weight: 900;
+      font-weight: 700;
       letter-spacing: 1.5px;
       text-transform: uppercase;
       line-height: 1;
@@ -973,7 +942,7 @@
 
     .speed-sign-value {
       font-size: clamp(3.8rem, 11vh, 5.2rem);
-      font-weight: bold;
+      font-weight: 600;
       line-height: 0.9;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       margin: 0;
@@ -1382,10 +1351,10 @@
             <line x1="28" y1="12" x2="31" y2="17" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
 
             <!-- Outward Anchored Cardinal Text Indicators -->
-            <text x="50" y="16" fill="#ff3b30" font-size="13.5" font-weight="900" text-anchor="middle">N</text>
-            <text x="91" y="54" fill="#94a3b8" font-size="11.5" font-weight="900" text-anchor="middle">E</text>
-            <text x="50" y="93" fill="#94a3b8" font-size="11.5" font-weight="900" text-anchor="middle">S</text>
-            <text x="9" y="54" fill="#94a3b8" font-size="11.5" font-weight="900" text-anchor="middle">W</text>
+            <text x="50" y="16" fill="#ff3b30" font-size="13.5" font-weight="700" text-anchor="middle">N</text>
+            <text x="91" y="54" fill="#94a3b8" font-size="11.5" font-weight="700" text-anchor="middle">E</text>
+            <text x="50" y="93" fill="#94a3b8" font-size="11.5" font-weight="700" text-anchor="middle">S</text>
+            <text x="9" y="54" fill="#94a3b8" font-size="11.5" font-weight="700" text-anchor="middle">W</text>
           </svg>
 
           <!-- Precision Dual-Taper Needle -->
@@ -1509,22 +1478,6 @@
           <span>50% Glass</span>
           <span>75% Muted</span>
           <span>100% Solid</span>
-        </div>
-      </div>
-
-      <!-- Display Mode / Fullscreen Section -->
-      <div class="slider-config-container" style="margin-top: 14px;">
-        <div class="slider-header-row" style="align-items: center; margin-bottom: 0;">
-          <div>
-            <div class="config-section-label" style="margin:0; font-size: 0.88rem;">Display Mode</div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Immersive fullscreen &amp; wake-lock</div>
-          </div>
-          <button id="modal-fullscreen-toggle-btn" class="hud-fullscreen-pill-btn" onclick="toggleFullScreen(event)">
-            <svg id="modal-fullscreen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: -1px;">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-            </svg>
-            <span id="modal-fullscreen-label">Fullscreen</span>
-          </button>
         </div>
       </div>
 
@@ -2570,20 +2523,6 @@
           icon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />';
         } else {
           icon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />';
-        }
-      }
-      const modalBtn = document.getElementById('modal-fullscreen-toggle-btn');
-      const modalIcon = document.getElementById('modal-fullscreen-icon');
-      const modalLabel = document.getElementById('modal-fullscreen-label');
-      if (modalBtn && modalLabel && modalIcon) {
-        if (isFull) {
-          modalBtn.classList.add('is-active');
-          modalIcon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />';
-          modalLabel.innerText = 'Exit Fullscreen';
-        } else {
-          modalBtn.classList.remove('is-active');
-          modalIcon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />';
-          modalLabel.innerText = 'Fullscreen';
         }
       }
       requestWakeLock();
