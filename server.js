@@ -1,3 +1,13 @@
+/**
+ * ====================================================================
+ * NOMAD HUD & Telemetry Navigation System
+ * 
+ * Proprietary & Created by BostonyFX
+ * Instagram: https://instagram.com/neurocosm
+ * All rights reserved.
+ * ====================================================================
+ */
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v9-08302026';
+const CACHE_NAME = 'nomad-roadtrip-v10-08312026-fix';
 
 const ASSETS_TO_CACHE = [
   './',
