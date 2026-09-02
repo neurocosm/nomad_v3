@@ -68,17 +68,22 @@
       margin-top: 2px;
     }
 
-    /* 2x2 Arcade Launch Grid */
+    /* Arcade Launch Grid */
     .visualizer-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
       gap: 12px;
       width: 100%;
       max-width: 480px;
       flex: 1;
-      margin: 14px 0;
+      margin: 12px 0;
       min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .visualizer-grid::-webkit-scrollbar {
+      display: none;
     }
 
     .vis-card {
@@ -89,11 +94,12 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      padding: 10px;
+      padding: 12px 8px;
       position: relative;
       overflow: hidden;
       transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
+      min-height: 115px;
     }
 
     .vis-card:active {
@@ -137,20 +143,21 @@
     }
 
     .card-icon {
-      font-size: clamp(2.2rem, 7.5vw, 3.0rem);
-      margin-bottom: 6px;
+      font-size: clamp(2.0rem, 6.5vw, 2.7rem);
+      margin-bottom: 5px;
       line-height: 1;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
     }
 
     .card-name {
-      font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+      font-size: clamp(0.92rem, 3.2vw, 1.05rem);
       font-weight: 900;
       letter-spacing: 1px;
       text-transform: uppercase;
       text-align: center;
     }
 
+    .card-kitt .card-name { color: #ff3344; }
     .card-disco .card-name { color: #ff007f; }
     .card-festival .card-name { color: #00f0ff; }
     .card-slamdance .card-name { color: #39ff14; }
@@ -198,7 +205,7 @@
     <div class="arcade-subtitle">Audio-Reactive Cockpit FX</div>
   </div>
 
-  <!-- 2x2 Launch Grid -->
+  <!-- Arcade Launch Grid -->
   <div class="visualizer-grid">
     <!-- 1. DISCO -->
     <a href="disco.html" class="vis-card card-disco" onclick="window.location.replace('disco.html'); return false;">
@@ -207,21 +214,21 @@
       <div class="card-desc">Radial Beams &amp; Dual EQ</div>
     </a>
 
-    <!-- 2. FESTIVAL OF JOY -->
+    <!-- 3. FESTIVAL OF JOY -->
     <a href="festival.html" class="vis-card card-festival" onclick="window.location.replace('festival.html'); return false;">
       <div class="card-icon">🍄</div>
       <div class="card-name">Festival of Joy</div>
       <div class="card-desc">360° Mandala &amp; Notes</div>
     </a>
 
-    <!-- 3. THE SLAM DANCE -->
+    <!-- 4. THE SLAM DANCE -->
     <a href="slamdance.html" class="vis-card card-slamdance" onclick="window.location.replace('slamdance.html'); return false;">
       <div class="card-icon">🤘</div>
       <div class="card-name">The Slam Dance</div>
       <div class="card-desc">Punk Skull &amp; Instruments</div>
     </a>
 
-    <!-- 4. SEASONS -->
+    <!-- 5. SEASONS -->
     <a href="seasons.html" class="vis-card card-seasons" onclick="window.location.replace('seasons.html'); return false;">
       <div class="card-icon">☀️</div>
       <div class="card-name">Seasons</div>

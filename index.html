@@ -440,54 +440,79 @@
       display: none !important;
     }
 
-    /* Minimalist Route Shields in Starfield Mode */
-    #map-card.is-starfield-mode .map-overlay-interstate,
-    #map-card.is-starfield-mode .map-overlay-route {
-      filter: drop-shadow(0 0 10px rgba(255, 183, 3, 0.4));
-      opacity: 0.85;
-      bottom: 10px !important;
-    }
-
-    /* Starfield Return-to-Map Icon-Only Button (Center-Bottom, Compact) */
-    .starfield-map-return-btn {
+    /* ------------------------------------------------------------- */
+    /* KINETIC FIDGET CONSOLE CORNER CONTROLS (LOWER-LEFT & RIGHT)   */
+    /* ------------------------------------------------------------- */
+    .fidget-corner-btn {
       display: none;
       position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 8px;
       z-index: 25;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: rgba(18, 9, 4, 0.85);
-      border: 1.2px solid #ffb703;
-      color: #ffe8d6;
-      box-shadow: 0 0 10px rgba(251, 133, 0, 0.3), inset 0 0 4px rgba(255, 183, 3, 0.2);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      color: rgba(243, 244, 246, 0.78);
       cursor: pointer;
       user-select: none;
       touch-action: manipulation;
-      transition: opacity 0.35s ease, transform 0.15s ease, background 0.2s, box-shadow 0.2s;
+      padding: 0;
       align-items: center;
       justify-content: center;
-      opacity: 1;
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease, filter 0.2s ease, opacity 0.25s ease;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .starfield-map-return-btn.hidden-by-toast {
-      opacity: 0 !important;
-      pointer-events: none !important;
+    .fidget-corner-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+      pointer-events: none;
+      filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 6px rgba(0, 0, 0, 0.65));
+      transition: transform 0.18s ease;
     }
 
-    .starfield-map-return-btn:active {
-      transform: translateX(-50%) scale(0.85);
-      background: #ffb703;
-      color: #080402;
-      box-shadow: 0 0 16px #ffb703;
+    .fidget-map-return-btn {
+      left: 8px;
     }
 
-    #map-card.is-starfield-mode .starfield-map-return-btn {
+    .fidget-dice-cycle-btn {
+      right: 8px;
+    }
+
+    .fidget-corner-btn:hover {
+      color: #ffffff;
+      transform: scale(1.12);
+    }
+
+    .fidget-corner-btn:active {
+      transform: scale(0.88);
+      color: #ffb703;
+    }
+
+    .fidget-corner-btn:active svg {
+      filter: drop-shadow(0 0 8px rgba(255, 183, 3, 0.95));
+    }
+
+    .fidget-corner-btn.rolling svg {
+      animation: diceRollAnim 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes diceRollAnim {
+      0% { transform: rotate(0deg) scale(1); }
+      35% { transform: rotate(180deg) scale(0.75); }
+      75% { transform: rotate(380deg) scale(1.18); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    #map-card.is-starfield-mode .fidget-corner-btn {
       display: flex;
+    }
+
+    #map-card.is-starfield-mode .map-overlay-interstate,
+    #map-card.is-starfield-mode .map-overlay-route {
+      display: none !important;
     }
 
     /* ------------------------------------------------------------- */
@@ -647,17 +672,87 @@
       height: 88%;
     }
 
-    .map-overlay-heading.general-lee-active {
-      background: #ff5500 !important;
-      border-color: #ffffff !important;
-      box-shadow: 0 0 20px rgba(255, 85, 0, 1), inset 0 0 10px rgba(0,0,0,0.5) !important;
-      padding: 0 !important;
+    @keyframes generalLeeBadgePulse {
+      0%   { transform: scale(1.0); box-shadow: 0 0 16px rgba(255, 85, 0, 0.9), inset 0 0 8px rgba(0,0,0,0.4); }
+      50%  { transform: scale(1.10); box-shadow: 0 0 30px rgba(255, 85, 0, 1), 0 0 45px rgba(255, 140, 0, 0.8), inset 0 0 12px rgba(0,0,0,0.5); }
+      100% { transform: scale(1.0); box-shadow: 0 0 16px rgba(255, 85, 0, 0.9), inset 0 0 8px rgba(0,0,0,0.4); }
     }
 
-    .map-overlay-heading.general-lee-active svg {
-      width: 82% !important;
-      height: 82% !important;
+    .map-overlay-heading.general-lee-active,
+    #map-card .map-overlay-heading.general-lee-active,
+    #map-card.theme-light-active .map-overlay-heading.general-lee-active {
+      background: #ff5500 !important;
+      border: 2.5px solid #ffffff !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 22px rgba(255, 85, 0, 1), inset 0 0 10px rgba(0,0,0,0.4) !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      animation: generalLeeBadgePulse 0.28s infinite ease-in-out !important;
+      transform-origin: center center !important;
+    }
+
+    .map-overlay-heading.general-lee-active svg,
+    #map-card .map-overlay-heading.general-lee-active svg,
+    #map-card.theme-light-active .map-overlay-heading.general-lee-active svg {
+      width: 88% !important;
+      height: 88% !important;
       display: block !important;
+      margin: auto !important;
+    }
+
+    /* Light Theme Map Overlays - Punchy, High-Contrast & Tactile (Never washes out) */
+    #map-card.theme-light-active .map-overlay-heading:not(.general-lee-active):not(.galaga-fire-active),
+    #map-card.theme-light-active .map-overlay-compass,
+    #map-card.theme-light-active .map-overlay-fullscreen {
+      background: rgba(255, 255, 255, 0.96) !important;
+      border: 2.5px solid rgba(15, 23, 42, 0.50) !important;
+      color: #0f172a !important;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+    }
+
+    #map-card.theme-light-active .telemetry-circle-val {
+      color: #0f172a !important;
+      text-shadow: none !important;
+    }
+
+    #map-card.theme-light-active .telemetry-circle-label {
+      color: #334155 !important;
+      text-shadow: none !important;
+    }
+
+    #map-card.theme-light-active .map-overlay-heading:not(.general-lee-active):not(.galaga-fire-active):active,
+    #map-card.theme-light-active .map-overlay-compass:active,
+    #map-card.theme-light-active .map-overlay-fullscreen:active {
+      background: #ffffff !important;
+      border-color: #0f172a !important;
+      box-shadow: 0 0 14px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    #map-card.theme-light-active .map-overlay-fullscreen svg path {
+      stroke: #0f172a !important;
+    }
+
+    #map-card.theme-light-active .compass-rose-svg line {
+      stroke: #0f172a !important;
+      stroke-width: 2.2 !important;
+    }
+
+    #map-card.theme-light-active .compass-rose-svg text {
+      fill: #0f172a !important;
+      font-weight: 800 !important;
+    }
+
+    #map-card.theme-light-active .compass-rose-svg text[fill="#ff3b30"] {
+      fill: #dc2626 !important;
+      font-weight: 900 !important;
+    }
+
+    #map-card.theme-light-active #needle-svg circle {
+      fill: #ffffff !important;
+      stroke: #0f172a !important;
+      stroke-width: 2 !important;
     }
 
     @keyframes galagaFireStrobe {
@@ -797,6 +892,13 @@
 
     .vehicle-overlay-marker.vehicle-pulsing-horn #vehicle-overlay-svg {
       filter: drop-shadow(0 0 16px rgba(255, 85, 0, 1)) drop-shadow(0 0 28px rgba(255, 150, 0, 0.8)) !important;
+    }
+
+    .vehicle-overlay-marker.vehicle-pulsing-horn #vehicle-overlay-svg polygon,
+    .vehicle-overlay-marker.vehicle-pulsing-horn #vehicle-overlay-svg path {
+      fill: #ff5500 !important;
+      stroke: #ffffff !important;
+      stroke-width: 2.5px !important;
     }
 
     .vehicle-overlay-marker.vehicle-pulsing-laser {
@@ -1407,21 +1509,33 @@
       <!-- Scalable Bottom-Right State/Route Shield Overlay -->
       <div class="map-overlay-route" id="route-badge-container"></div>
 
-      <!-- Dedicated Independent Vehicle Overlay Marker -->
-      <div class="vehicle-overlay-marker mode-heading-up" id="vehicle-overlay">
+      <!-- Dedicated Independent Vehicle Overlay Marker (Chevron Map Theme Toggle) -->
+      <div class="vehicle-overlay-marker mode-heading-up" id="vehicle-overlay" title="Toggle Map Themes">
         <svg id="vehicle-overlay-svg" viewBox="0 0 24 24" fill="#007aff" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.6));">
           <polygon points="12 2 19 21 12 17 5 21 12 2"/>
         </svg>
       </div>
 
-      <!-- Starfield Mode Dedicated Return-to-Map Icon-Only Button -->
-      <div class="starfield-map-return-btn" id="starfield-map-return-btn" title="Return to Map">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Fidget Mode: Far Lower-Left Return-to-Map Button -->
+      <button class="fidget-corner-btn fidget-map-return-btn" id="fidget-map-return-btn" title="Return to Live Map" aria-label="Return to Live Map">
+        <svg viewBox="0 0 24 24" fill="rgba(0, 0, 0, 0.4)" stroke="currentColor" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
           <line x1="8" y1="2" x2="8" y2="18"/>
           <line x1="16" y1="6" x2="16" y2="22"/>
         </svg>
-      </div>
+      </button>
+
+      <!-- Fidget Mode: Far Lower-Right Die / Fidget Cycle Button -->
+      <button class="fidget-corner-btn fidget-dice-cycle-btn" id="fidget-dice-cycle-btn" title="Cycle Fidget Consoles" aria-label="Cycle Fidget Consoles">
+        <svg class="fidget-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="2.5" y="2.5" width="19" height="19" rx="4.5" ry="4.5" fill="rgba(0, 0, 0, 0.4)" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
+          <circle cx="16.8" cy="7.2" r="1.4" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="7.2" cy="16.8" r="1.4" fill="currentColor"/>
+          <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
+        </svg>
+      </button>
 
       <!-- Ephemeral Map Theme Name Toast (Center Bottom) -->
       <div class="map-theme-toast" id="map-theme-toast">Natural Dark Navigation</div>
@@ -1666,6 +1780,7 @@
     let weatherDistanceIntervalMiles = parseInt(localStorage.getItem('nomad_weather_distance_mi') || '15', 10);
 
     let telemetryMode = 0;
+    let cameraPerspectiveMode = 'perspective'; // 'perspective' (3D), 'overview' (2D Track), 'north-up' (2D North)
     let isHeadingUp = true;
     let currentPitch = 58;
 
@@ -1674,8 +1789,8 @@
       { name: 'Natural Light Navigation', type: 'blueprint-light', darkSign: false },
       { name: 'Amber Cosmic Starfield', type: 'kinetic-starfield', subMode: 'starfield', darkSign: true },
       { name: 'Underwater Ocean Deep', type: 'kinetic-starfield', subMode: 'underwater', darkSign: true },
-      { name: 'Dark Matter (Night)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', darkSign: true },
-      { name: 'Positron (Neutral Light)', type: 'remote', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', darkSign: false }
+      { name: 'Synthomatic Sensory Console', type: 'kinetic-starfield', subMode: 'kitt', darkSign: true },
+      { name: 'Stampede Canyon Charge', type: 'kinetic-starfield', subMode: 'stampede', darkSign: true }
     ];
     let currentThemeIndex = 0;
     try {
@@ -1688,74 +1803,11 @@
     let cachedPositronStyle = null;
 
     async function getMapStyleObject(theme) {
-      try {
-        if (theme.type === 'blueprint-dark') {
-          if (!cachedDarkMatterStyle) {
-            const res = await fetch('https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json');
-            if (res.ok) cachedDarkMatterStyle = await res.json();
-          }
-          if (cachedDarkMatterStyle && cachedDarkMatterStyle.layers) {
-            const style = JSON.parse(JSON.stringify(cachedDarkMatterStyle));
-            style.layers.forEach(layer => {
-              if (layer.id === 'background') {
-                layer.paint = layer.paint || {};
-                layer.paint['background-color'] = '#0c1017';
-              } else if (layer.id === 'water') {
-                layer.paint = { 'fill-color': '#0d223a', 'fill-outline-color': '#1d4e89', 'fill-opacity': 0.98 };
-              } else if (layer.id === 'waterway') {
-                layer.paint = { 'line-color': '#38bdf8', 'line-width': 2.2 };
-              } else if (layer.id === 'landcover' || layer.id === 'landuse' || layer.id === 'landuse_residential' || layer.id.startsWith('park_') || layer.id === 'park') {
-                layer.paint = { 'fill-color': '#11291b', 'fill-outline-color': '#1e4d31', 'fill-opacity': 0.90 };
-              } else if (layer.id === 'building' || layer.id === 'building-top') {
-                layer.paint = { 'fill-color': '#1b2433', 'fill-outline-color': '#475569', 'fill-opacity': 0.88 };
-              } else if (layer.id.startsWith('road_') && layer.id.endsWith('_fill')) {
-                layer.paint = layer.paint || {};
-                layer.paint['line-color'] = '#ffffff';
-                layer.paint['line-opacity'] = 1.0;
-              } else if (layer.id.startsWith('road_') && layer.id.endsWith('_case')) {
-                layer.paint = layer.paint || {};
-                layer.paint['line-color'] = '#050914';
-              }
-            });
-            return style;
-          }
-          return 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
-        } else if (theme.type === 'blueprint-light') {
-          if (!cachedPositronStyle) {
-            const res = await fetch('https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
-            if (res.ok) cachedPositronStyle = await res.json();
-          }
-          if (cachedPositronStyle && cachedPositronStyle.layers) {
-            const style = JSON.parse(JSON.stringify(cachedPositronStyle));
-            style.layers.forEach(layer => {
-              if (layer.id === 'background') {
-                layer.paint = layer.paint || {};
-                layer.paint['background-color'] = '#e2e8f0';
-              } else if (layer.id === 'water') {
-                layer.paint = { 'fill-color': '#bfdbfe', 'fill-outline-color': '#2563eb', 'fill-opacity': 0.98 };
-              } else if (layer.id === 'waterway') {
-                layer.paint = { 'line-color': '#0284c7', 'line-width': 2.4 };
-              } else if (layer.id === 'landcover' || layer.id === 'landuse' || layer.id === 'landuse_residential' || layer.id.startsWith('park_')) {
-                layer.paint = { 'fill-color': '#bbf7d0', 'fill-outline-color': '#16a34a', 'fill-opacity': 0.85 };
-              } else if (layer.id === 'building' || layer.id === 'building-top') {
-                layer.paint = { 'fill-color': '#cbd5e1', 'fill-outline-color': '#475569', 'fill-opacity': 0.95 };
-              } else if (layer.id.startsWith('road_') && layer.id.endsWith('_fill')) {
-                layer.paint = layer.paint || {};
-                layer.paint['line-color'] = '#ffffff';
-                layer.paint['line-opacity'] = 1.0;
-              } else if (layer.id.startsWith('road_') && layer.id.endsWith('_case')) {
-                layer.paint = layer.paint || {};
-                layer.paint['line-color'] = '#1e293b';
-              }
-            });
-            return style;
-          }
-          return 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-        }
-      } catch (err) {
-        console.warn('Map style processing fallback:', err);
+      if (theme.url) return theme.url;
+      if (theme.type === 'blueprint-light') {
+        return 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
       }
-      return theme.url || 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+      return 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
     }
 
     let rawTempF = null;
@@ -1834,13 +1886,45 @@
       } catch (err) {}
     }
 
+    let keepAliveOscillator = null;
+    let keepAliveGain = null;
+
+    async function routeAudioToSpeakerIfSupported(ctx) {
+      try {
+        if (ctx && typeof ctx.setSinkId === 'function' && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const speaker = devices.find(d => d.kind === 'audiooutput' && (d.label.toLowerCase().includes('speaker') || d.label.toLowerCase().includes('phone') || d.label.toLowerCase().includes('built-in')));
+          if (speaker && speaker.deviceId) {
+            await ctx.setSinkId(speaker.deviceId);
+          }
+        }
+      } catch (e) {}
+    }
+
+    function startAudioKeepAlive(ctx) {
+      try {
+        if (!ctx || keepAliveOscillator) return;
+        // Ultra-low sub-audible carrier maintaining active hardware A2DP link to eliminate Bluetooth sleep wake-up latency
+        keepAliveOscillator = ctx.createOscillator();
+        keepAliveGain = ctx.createGain();
+        keepAliveOscillator.type = 'sine';
+        keepAliveOscillator.frequency.setValueAtTime(12, ctx.currentTime);
+        keepAliveGain.gain.setValueAtTime(0.00002, ctx.currentTime);
+        keepAliveOscillator.connect(keepAliveGain);
+        keepAliveGain.connect(ctx.destination);
+        keepAliveOscillator.start();
+      } catch (e) {}
+    }
+
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        routeAudioToSpeakerIfSupported(audioCtx);
       }
       if (audioCtx.state === 'suspended') {
         audioCtx.resume().catch(() => {});
       }
+      startAudioKeepAlive(audioCtx);
       return audioCtx;
     }
 
@@ -1857,6 +1941,7 @@
         source.buffer = buffer;
         source.connect(ctx.destination);
         source.start(0);
+        startAudioKeepAlive(ctx);
       } catch (e) {}
     }
 
@@ -1911,7 +1996,7 @@
           osc2.type = 'square';
           osc1.frequency.setValueAtTime(freq, now + offset);
           osc2.frequency.setValueAtTime(freq * 1.004, now + offset);
-          gain.gain.setValueAtTime(0.18, now + offset);
+          gain.gain.setValueAtTime(0.20, now + offset);
           gain.gain.exponentialRampToValueAtTime(0.001, now + offset + dur);
 
           osc1.connect(gain);
@@ -1945,9 +2030,9 @@
           badgeEl.classList.remove('galaga-fire-active');
           badgeEl.classList.add('general-lee-active');
           badgeEl.innerHTML = `
-            <svg width="84%" height="84%" viewBox="0 0 100 46" style="overflow: visible; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-              <path d="M 12 0 L 34 0 L 46 12 L 46 34 L 34 46 L 12 46 L 0 34 L 0 12 Z M 16 12 L 16 34 L 30 34 L 30 12 Z" fill="#000000" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="miter" />
-              <path d="M 64 12 L 54 20 L 54 12 L 68 0 L 78 0 L 78 36 L 94 36 L 94 46 L 54 46 L 54 36 L 68 36 L 68 12 Z" fill="#000000" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="miter" />
+            <svg viewBox="0 0 94 46" preserveAspectRatio="xMidYMid meet" style="width: 88%; height: 88%; overflow: visible; display: block; margin: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
+              <path d="M 12 0 L 34 0 L 46 12 L 46 34 L 34 46 L 12 46 L 0 34 L 0 12 Z M 15 12 L 15 34 L 31 34 L 31 12 Z" fill="#000000" stroke="#ffffff" stroke-width="3" stroke-linejoin="miter" />
+              <path d="M 64 12 L 54 20 L 54 12 L 68 0 L 78 0 L 78 36 L 94 36 L 94 46 L 54 46 L 54 36 L 68 36 L 68 12 Z" fill="#000000" stroke="#ffffff" stroke-width="3" stroke-linejoin="miter" />
             </svg>
           `;
           dixieHornTimeout = setTimeout(() => {
@@ -2636,11 +2721,56 @@
       renderWeatherModalPills();
     }
 
-    function togglePitchMode() {
-      currentPitch = (currentPitch === 0) ? 58 : 0;
-      if (map) {
-        map.easeTo({ pitch: currentPitch, duration: 600 });
+    function cyclePerspectiveMode(event) {
+      if (event) event.stopPropagation();
+      
+      if (cameraPerspectiveMode === 'perspective') {
+        cameraPerspectiveMode = 'overview';
+        currentPitch = 0;
+        isHeadingUp = true;
+        showMapThemeToast({ name: '2D Overview Track', type: 'perspective' });
+      } else if (cameraPerspectiveMode === 'overview') {
+        cameraPerspectiveMode = 'north-up';
+        currentPitch = 0;
+        isHeadingUp = false;
+        showMapThemeToast({ name: '2D North-Up Locked', type: 'perspective' });
+      } else {
+        cameraPerspectiveMode = 'perspective';
+        currentPitch = 58;
+        isHeadingUp = true;
+        showMapThemeToast({ name: '3D Perspective Drive', type: 'perspective' });
       }
+
+      const compassBtn = document.getElementById('compass-btn');
+      const vehicleOverlay = document.getElementById('vehicle-overlay');
+
+      if (compassBtn) {
+        compassBtn.classList.remove('perspective-3d', 'perspective-overview', 'perspective-north-up');
+        compassBtn.classList.add(`perspective-${cameraPerspectiveMode}`);
+        if (cameraPerspectiveMode === 'north-up') {
+          compassBtn.classList.remove('active-heading-up');
+        } else {
+          compassBtn.classList.add('active-heading-up');
+        }
+      }
+
+      if (vehicleOverlay) {
+        if (cameraPerspectiveMode === 'north-up') {
+          vehicleOverlay.classList.remove('mode-heading-up');
+          vehicleOverlay.classList.add('mode-north-up');
+        } else {
+          vehicleOverlay.classList.remove('mode-north-up');
+          vehicleOverlay.classList.add('mode-heading-up');
+        }
+      }
+
+      syncMapPadding();
+      updateCompassAndVehicleOrientation(currentHeading);
+      if (lastLat !== null && lastLon !== null) updateMapCamera([lastLon, lastLat], true);
+    }
+
+    function togglePitchMode() {
+      cyclePerspectiveMode();
     }
 
     function setupInteractions() {
@@ -2649,40 +2779,8 @@
       fsBtn.addEventListener('click', toggleFullScreen);
 
       const compassBtn = document.getElementById('compass-btn');
-      let compassPressTimer, isCompassLongPress = false, isCompassTouchHandled = false;
-
       compassBtn.addEventListener('contextmenu', (e) => e.preventDefault());
-      compassBtn.addEventListener('touchstart', (e) => {
-        isCompassTouchHandled = true;
-        isCompassLongPress = false;
-        compassPressTimer = setTimeout(() => {
-          isCompassLongPress = true;
-          if (navigator.vibrate) navigator.vibrate(40);
-          togglePitchMode();
-        }, 500);
-      }, { passive: true });
-
-      compassBtn.addEventListener('touchmove', () => clearTimeout(compassPressTimer));
-      compassBtn.addEventListener('touchend', (e) => {
-        clearTimeout(compassPressTimer);
-        if (!isCompassLongPress) toggleMapMode(e);
-        setTimeout(() => { isCompassTouchHandled = false; }, 350);
-      });
-
-      compassBtn.addEventListener('mousedown', () => {
-        if (isCompassTouchHandled) return;
-        isCompassLongPress = false;
-        compassPressTimer = setTimeout(() => {
-          isCompassLongPress = true;
-          togglePitchMode();
-        }, 500);
-      });
-      compassBtn.addEventListener('mouseleave', () => clearTimeout(compassPressTimer));
-      compassBtn.addEventListener('mouseup', (e) => {
-        if (isCompassTouchHandled) return;
-        clearTimeout(compassPressTimer);
-        if (!isCompassLongPress) toggleMapMode(e);
-      });
+      compassBtn.addEventListener('click', (e) => cyclePerspectiveMode(e));
 
       const telemetryBadge = document.getElementById('heading-text');
       let telemPressTimer, isTelemLongPress = false, isTelemTouchHandled = false;
@@ -2846,17 +2944,25 @@
         if (!isVehicleLongPress) toggleMapStyle(e);
       });
 
-      // Starfield dedicated Return-to-Map button
-      const starfieldMapReturnBtn = document.getElementById('starfield-map-return-btn');
-      if (starfieldMapReturnBtn) {
-        starfieldMapReturnBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleMapStyle(e);
+      // Fidget Mode: Far Lower-Left Return-to-Map button
+      const fidgetMapReturnBtn = document.getElementById('fidget-map-return-btn');
+      if (fidgetMapReturnBtn) {
+        fidgetMapReturnBtn.addEventListener('click', (e) => {
+          returnToMapFromFidget(e);
         });
-        starfieldMapReturnBtn.addEventListener('touchend', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          toggleMapStyle(e);
+        fidgetMapReturnBtn.addEventListener('touchend', (e) => {
+          returnToMapFromFidget(e);
+        });
+      }
+
+      // Fidget Mode: Far Lower-Right Die / Fidget Cycle button
+      const fidgetDiceCycleBtn = document.getElementById('fidget-dice-cycle-btn');
+      if (fidgetDiceCycleBtn) {
+        fidgetDiceCycleBtn.addEventListener('click', (e) => {
+          cycleFidgetThemes(e);
+        });
+        fidgetDiceCycleBtn.addEventListener('touchend', (e) => {
+          cycleFidgetThemes(e);
         });
       }
 
@@ -2865,65 +2971,105 @@
       if (mapContainerEl) {
         mapContainerEl.addEventListener('click', (e) => {
           // Avoid triggering on overlay buttons or vehicle
-          if (e.target.closest('#vehicle-overlay') || e.target.closest('#starfield-map-return-btn') || e.target.closest('.hud-badge-floating')) return;
+          if (e.target.closest('#vehicle-overlay') || e.target.closest('#fidget-map-return-btn') || e.target.closest('#fidget-dice-cycle-btn') || e.target.closest('.hud-badge-floating')) return;
           handleMapMultiTap(e);
         });
       }
     }
 
     let mapThemeToastTimeout = null;
-    let starfieldBtnTimeout = null;
 
     function showMapThemeToast(theme) {
       const toast = document.getElementById('map-theme-toast');
-      const starfieldBtn = document.getElementById('starfield-map-return-btn');
       if (!toast) return;
 
       if (mapThemeToastTimeout) clearTimeout(mapThemeToastTimeout);
-      if (starfieldBtnTimeout) clearTimeout(starfieldBtnTimeout);
 
       toast.innerText = theme.name;
 
       if (theme.type === 'kinetic-starfield') {
         toast.classList.add('is-starfield');
-        if (starfieldBtn) {
-          starfieldBtn.classList.add('hidden-by-toast');
-        }
       } else {
         toast.classList.remove('is-starfield');
-        if (starfieldBtn) {
-          starfieldBtn.classList.remove('hidden-by-toast');
-        }
       }
 
       toast.classList.add('show');
 
       mapThemeToastTimeout = setTimeout(() => {
         toast.classList.remove('show');
-        if (theme.type === 'kinetic-starfield' && starfieldBtn) {
-          starfieldBtnTimeout = setTimeout(() => {
-            starfieldBtn.classList.remove('hidden-by-toast');
-          }, 180);
-        }
       }, 1900);
     }
 
-    async function toggleMapStyle(event) {
-      if (event) event.stopPropagation();
-      currentThemeIndex = (currentThemeIndex + 1) % mapThemes.length;
+    function updateCompassAndVehicleOrientation(heading) {
+      const needleEl = document.getElementById('needle-svg');
+      const vehicleSvg = document.getElementById('vehicle-overlay-svg');
+      const h = (heading !== null && !isNaN(heading)) ? heading : 0;
+      
+      if (cameraPerspectiveMode === 'north-up') {
+        if (needleEl) needleEl.style.transform = 'rotate(0deg)';
+        if (vehicleSvg) vehicleSvg.style.transform = `rotate(${h}deg)`;
+      } else {
+        if (needleEl) needleEl.style.transform = `rotate(${-h}deg)`;
+        if (vehicleSvg) vehicleSvg.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Split Navigation & Kinetic Console Theme Engine
+    let lastRealMapIndex = (currentThemeIndex < 2) ? currentThemeIndex : 0;
+
+    function isFidgetTheme(idx) {
+      return mapThemes[idx] && mapThemes[idx].type === 'kinetic-starfield';
+    }
+
+    function getRealMapIndices() {
+      const indices = [];
+      for (let i = 0; i < mapThemes.length; i++) {
+        if (mapThemes[i].type !== 'kinetic-starfield') indices.push(i);
+      }
+      return indices.length > 0 ? indices : [0];
+    }
+
+    function getFidgetIndices() {
+      const indices = [];
+      for (let i = 0; i < mapThemes.length; i++) {
+        if (mapThemes[i].type === 'kinetic-starfield') indices.push(i);
+      }
+      return indices.length > 0 ? indices : [2, 3, 4, 5];
+    }
+
+    async function applyThemeByIndex(targetIndex, showToast = true) {
+      if (targetIndex < 0 || targetIndex >= mapThemes.length) targetIndex = 0;
+      currentThemeIndex = targetIndex;
+      
+      const theme = mapThemes[currentThemeIndex];
+      if (theme.type !== 'kinetic-starfield') {
+        lastRealMapIndex = currentThemeIndex;
+      }
+      
       try {
         localStorage.setItem('nomad_map_theme_index', currentThemeIndex);
       } catch(e) {}
-      const theme = mapThemes[currentThemeIndex];
-      showMapThemeToast(theme);
+
+      if (showToast) {
+        showMapThemeToast(theme);
+      }
+
       const mapEl = document.getElementById('map');
       const mapCard = document.getElementById('map-card');
       const vehicleSvg = document.getElementById('vehicle-overlay-svg');
       const compassBtn = document.getElementById('compass-btn');
 
-      // Compass theme contrast adjustment
+      // Card & compass theme contrast adjustment
+      if (mapCard) {
+        if (theme.type === 'blueprint-light') {
+          mapCard.classList.add('theme-light-active');
+        } else {
+          mapCard.classList.remove('theme-light-active');
+        }
+      }
+
       if (compassBtn) {
-        if (!theme.darkSign || theme.type === 'blueprint-light') {
+        if (theme.type === 'blueprint-light') {
           compassBtn.classList.add('compass-light-map');
         } else {
           compassBtn.classList.remove('compass-light-map');
@@ -2970,6 +3116,57 @@
         if (theme.darkSign) speedSignBox.classList.add('dark-mode-sign');
         else speedSignBox.classList.remove('dark-mode-sign');
       }
+    }
+
+    // 1. Vehicle Chevron Marker: Cycles sequentially through map styles and then into sensory consoles
+    async function cycleMapFromChevron(event) {
+      if (event) event.stopPropagation();
+      const nextIdx = (currentThemeIndex + 1) % mapThemes.length;
+      await applyThemeByIndex(nextIdx, true);
+    }
+
+    // 2. Far Lower-Left Map Icon: Instantly escapes/returns to the first map navigation theme (index 0)
+    async function returnToMapFromFidget(event) {
+      if (event) {
+        event.stopPropagation();
+        if (event.cancelable) event.preventDefault();
+      }
+      const realMaps = getRealMapIndices();
+      // Reset to beginning of map theme list (index 0) so chevron cycles through all map themes in order
+      const targetMapIdx = realMaps.length > 0 ? realMaps[0] : 0;
+      await applyThemeByIndex(targetMapIdx, true);
+    }
+
+    // 3. Far Lower-Right Die Icon: Cycles exclusively through kinetic fidget consoles
+    async function cycleFidgetThemes(event) {
+      if (event) {
+        event.stopPropagation();
+        if (event.cancelable) event.preventDefault();
+      }
+
+      // Play tactile dice tumble animation
+      const diceBtn = document.getElementById('fidget-dice-cycle-btn');
+      if (diceBtn) {
+        diceBtn.classList.remove('rolling');
+        void diceBtn.offsetWidth; // Force DOM reflow to restart CSS keyframe animation
+        diceBtn.classList.add('rolling');
+      }
+
+      // Micro-haptic feedback if supported
+      if (navigator.vibrate) {
+        try { navigator.vibrate([15, 25, 15]); } catch(e) {}
+      }
+
+      const fidgets = getFidgetIndices();
+      let curPos = fidgets.indexOf(currentThemeIndex);
+      if (curPos === -1) curPos = 0;
+      const nextFidgetIdx = fidgets[(curPos + 1) % fidgets.length];
+      await applyThemeByIndex(nextFidgetIdx, true);
+    }
+
+    // Backward-compatible alias
+    async function toggleMapStyle(event) {
+      await cycleMapFromChevron(event);
     }
 
     function syncMapPadding() {
@@ -3117,6 +3314,7 @@
 
     async function initMap() {
       const mapCard = document.getElementById('map-card');
+      const compassBtn = document.getElementById('compass-btn');
       if (window.KineticConsole && mapCard) {
         window.KineticConsole.init(mapCard);
       }
@@ -3126,8 +3324,29 @@
         if (mapCard) mapCard.classList.add('is-starfield-mode');
         const mapEl = document.getElementById('map');
         if (mapEl) mapEl.style.display = 'none';
-        if (window.KineticConsole) window.KineticConsole.show();
+        if (window.KineticConsole) {
+          if (initialTheme.subMode) {
+            window.KineticConsole.setMode(initialTheme.subMode);
+          }
+          window.KineticConsole.show();
+        }
       }
+
+      if (mapCard) {
+        if (initialTheme.type === 'blueprint-light') {
+          mapCard.classList.add('theme-light-active');
+        } else {
+          mapCard.classList.remove('theme-light-active');
+        }
+      }
+      if (compassBtn) {
+        if (initialTheme.type === 'blueprint-light') {
+          compassBtn.classList.add('compass-light-map');
+        } else {
+          compassBtn.classList.remove('compass-light-map');
+        }
+      }
+
       const styleObj = await getMapStyleObject(initialTheme);
 
       map = new maplibregl.Map({
@@ -3137,15 +3356,40 @@
         zoom: 16.0,
         bearing: 0,
         pitch: currentPitch,
+        maxTileCacheSize: 60,
+        trackResize: true,
+        refreshExpiredTiles: false,
         attributionControl: false
       });
 
       map.on('load', () => { 
         syncMapPadding();
         map.resize();
+        
+        // Resilient WebGL context loss recovery for mobile Safari / WebKit
+        const canvas = map.getCanvas();
+        if (canvas) {
+          canvas.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            console.warn('NOMAD: WebGL context lost. Recovering...');
+          }, false);
+          canvas.addEventListener('webglcontextrestored', () => {
+            console.log('NOMAD: WebGL context restored.');
+            if (map) map.resize();
+          }, false);
+        }
       });
+
       map.on('dragstart', () => { lastUserMapInteractionTime = Date.now(); });
       map.on('zoomstart', (e) => { if (e.originalEvent) lastUserMapInteractionTime = Date.now(); });
+
+      // Ensure crisp render when returning from background
+      window.addEventListener('pageshow', () => { if (map) map.resize(); });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && map) {
+          setTimeout(() => map.resize(), 100);
+        }
+      });
     }
 
     function getCardinalDirection(angle) {
@@ -3175,28 +3419,33 @@
       return (Date.now() - lastSettledHeadingTimestamp) < 3000;
     }
 
-    /* SECONDARY CONSENSUS REVERSE GEOCODER (BigDataCloud Free Keyless Client API) */
+    let hasRealGpsLock = false;
+
+    /* SECONDARY CONSENSUS REVERSE GEOCODER (Photon OpenStreetMap Free Client Geocoder) */
     async function fetchSecondaryReverseGeocode(lat, lon) {
       try {
-        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+        const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`;
         const res = await fetch(url);
         if (!res.ok) return null;
-        const bdc = await res.json();
-        if (bdc) {
-          const street = bdc.localityInfo?.administrative?.[bdc.localityInfo.administrative.length - 1]?.name || bdc.locality || bdc.city || "";
+        const json = await res.json();
+        if (json && json.features && json.features.length > 0) {
+          const p = json.features[0].properties;
+          const street = p.street || p.name || "";
           return {
             street: street,
-            city: bdc.city || bdc.locality || "",
-            state: bdc.principalSubdivision || "",
-            postcode: bdc.postcode || "",
-            country: bdc.countryName || ""
+            city: p.city || p.locality || p.district || p.town || "",
+            state: p.state || "",
+            postcode: p.postcode || "",
+            country: p.country || ""
           };
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn("Secondary Geocode Error:", e);
+      }
       return null;
     }
 
-    async function fetchLocationDetails(lat, lon, speed) {
+    async function fetchLocationDetails(lat, lon, speed, forceImmediate = false) {
       document.getElementById('lat-lon').innerText = `Lat: ${lat.toFixed(5)} | Lon: ${lon.toFixed(5)}`;
       const now = Date.now();
       const speedMph = (speed !== null && !isNaN(speed)) ? (speed * 2.23694) : 0;
@@ -3209,29 +3458,29 @@
       lastPositionUpdateLat = lat;
       lastPositionUpdateLon = lon;
 
-      // 1. CRITICAL STATIONARY LOCK ENGINE (Solves Intersection Hopping & Stoplight Drift)
-      // When vehicle is stopped or moving at crawl speed (< 2.8 MPH), lock the current road name completely.
-      if (speedMph < 2.8) {
+      // 1. STATIONARY LOCK ENGINE (Solves Intersection Hopping & Stoplight Drift)
+      // When vehicle is stopped or moving at crawl speed (< 2.8 MPH), lock the current road name if stable.
+      if (speedMph < 2.8 && !forceImmediate && hasInitialGeocode) {
         if (!stationaryLockActive) {
           stationaryLockActive = true;
           stationaryAnchorLat = lat;
           stationaryAnchorLon = lon;
         } else if (stationaryAnchorLat !== null && stationaryAnchorLon !== null) {
           const driftDist = getDistanceFromLatLonInMeters(stationaryAnchorLat, stationaryAnchorLon, lat, lon);
-          // If within 25m stoplight GPS error ellipse, never alter street name
+          // If within 25m stoplight GPS error ellipse, keep stable street name
           if (driftDist < 25) {
             return;
           }
         }
-      } else {
+      } else if (speedMph >= 2.8) {
         // Vehicle is moving; disengage stationary lock
         stationaryLockActive = false;
         stationaryAnchorLat = null;
         stationaryAnchorLon = null;
       }
 
-      // Throttle lookups to at most once every 3.5s when moving
-      if (hasInitialGeocode) {
+      // Throttle lookups to at most once every 3.5s when moving, unless forced
+      if (hasInitialGeocode && !forceImmediate) {
         if (now - lastGeocodeTime < 3500) return;
         if (lastGeocodedLat !== null && lastGeocodedLon !== null) {
           const distanceMoved = getDistanceFromLatLonInMeters(lastGeocodedLat, lastGeocodedLon, lat, lon);
@@ -3259,9 +3508,9 @@
           console.warn("Primary Nominatim Geocode Network Error:", netErr);
         }
 
-        // Secondary fallback if Nominatim is unreachable or rate-limited
+        // Secondary fallback if Nominatim is unreachable, rate-limited, or returned no road
         let secondaryFallback = null;
-        if (!data || !data.address) {
+        if (!data || !data.address || !data.address.road) {
           secondaryFallback = await fetchSecondaryReverseGeocode(lat, lon);
         }
 
@@ -3271,7 +3520,8 @@
           hasInitialGeocode = true;
 
           const addr = data ? data.address : {};
-          const { interstate, usRoute, stateRoute, secondaryRoute, rawRoad, isLink, isMotorway, maxSpeedMph } = data ? parseUniversalRoadSignage(data) : { interstate: null, usRoute: null, stateRoute: null, secondaryRoute: null, rawRoad: secondaryFallback?.street || "", isLink: false, isMotorway: false, maxSpeedMph: null };
+          const { interstate, usRoute, stateRoute, secondaryRoute, rawRoad: parsedRoad, isLink, isMotorway, maxSpeedMph } = data ? parseUniversalRoadSignage(data) : { interstate: null, usRoute: null, stateRoute: null, secondaryRoute: null, rawRoad: secondaryFallback?.street || "", isLink: false, isMotorway: false, maxSpeedMph: null };
+          const rawRoad = parsedRoad || addr.road || addr.residential || addr.pedestrian || addr.footway || secondaryFallback?.street || "";
 
           if (maxSpeedMph && !isNaN(maxSpeedMph)) {
             currentSpeedLimitMph = maxSpeedMph;
@@ -3558,15 +3808,8 @@
           });
         }
 
-        const vehicleSvg = document.getElementById('vehicle-overlay-svg');
-        if (vehicleSvg) {
-          vehicleSvg.style.transform = isHeadingUp ? 'rotate(0deg)' : `rotate(${heading}deg)`;
-        }
-
+        updateCompassAndVehicleOrientation(heading);
         if (lastLat !== null && lastLon !== null) updateMapCamera([lastLon, lastLat]);
-        
-        const needleEl = document.getElementById('needle-svg');
-        if (needleEl) needleEl.style.transform = `rotate(${heading}deg)`;
       }
     }
 
@@ -3630,18 +3873,28 @@
       }
 
       map.easeTo(cameraOptions);
-      if (vehicleSvg) {
-        vehicleSvg.style.transform = isHeadingUp ? 'rotate(0deg)' : `rotate(${currentHeading}deg)`;
-      }
+      updateCompassAndVehicleOrientation(currentHeading);
     }
 
-    function handlePositionUpdate(position) {
+    function handlePositionUpdate(position, isIp = false) {
       if (!position || !position.coords) return;
       const { latitude, longitude, heading, speed, altitude, accuracy } = position.coords;
       const lngLat = [longitude, latitude];
 
+      // If we already have real GPS lock, reject low-accuracy IP estimate
+      if (hasRealGpsLock && isIp) return;
+
+      const wasIpEstimate = !hasRealGpsLock;
+      if (!isIp) {
+        hasRealGpsLock = true;
+      }
+
       rawAltitudeMeters = altitude !== undefined ? altitude : null;
       rawAccuracyMeters = accuracy !== undefined ? accuracy : null;
+
+      const positionJumped = (lastLat !== null && lastLon !== null) && 
+        (getDistanceFromLatLonInMeters(lastLat, lastLon, latitude, longitude) > 35);
+
       lastLat = latitude;
       lastLon = longitude;
 
@@ -3650,8 +3903,6 @@
 
       if (heading !== null && !isNaN(heading)) {
         updateHeading(heading, false);
-      } else if (speedMph < 2.5 && lastKnownMovingHeading !== null) {
-        renderTelemetryBadge();
       } else {
         renderTelemetryBadge();
       }
@@ -3667,12 +3918,20 @@
       }
       updateMapCamera(lngLat);
 
-      fetchLocationDetails(latitude, longitude, speed);
+      const forceGeocode = (wasIpEstimate && !isIp) || positionJumped;
+      if (forceGeocode) {
+        stationaryLockActive = false;
+        stationaryAnchorLat = null;
+        stationaryAnchorLon = null;
+        lastGeocodeTime = 0;
+      }
+
+      fetchLocationDetails(latitude, longitude, speed, forceGeocode);
       fetchWeatherAndElevation(latitude, longitude);
     }
 
     async function fetchIpLocationFallback() {
-      if (lastLat !== null && lastLon !== null) return;
+      if (hasRealGpsLock || (lastLat !== null && lastLon !== null)) return;
       try {
         const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
         if (!res.ok) return;
@@ -3680,7 +3939,7 @@
         if (data && data.latitude && data.longitude) {
           const lat = parseFloat(data.latitude);
           const lon = parseFloat(data.longitude);
-          if (!isNaN(lat) && !isNaN(lon) && lastLat === null) {
+          if (!isNaN(lat) && !isNaN(lon) && !hasRealGpsLock) {
             handlePositionUpdate({
               coords: {
                 latitude: lat,
@@ -3690,7 +3949,7 @@
                 altitude: 0,
                 accuracy: 5000
               }
-            });
+            }, true);
           }
         }
       } catch (e) {}
