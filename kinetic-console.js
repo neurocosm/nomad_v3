@@ -85,6 +85,8 @@
       this.circuitNodes = [];
       this.circuitTraces = [];
       this.dataPackets = [];
+      this.pcbComponents = [];
+      this.pcbVias = [];
       this.spmPhase = 0;
 
       // Live Weather Reactive State
@@ -120,7 +122,7 @@
       this.ringRotation = 0;
       this.pulsePhase = 0;
 
-      // Stampede Canyon Wildlife state
+      // Stampede Canyon Wildlife & Sensor Telemetry state
       this.stampedeDust = [];
       this.stampedeAnimals = [];
       this.stampedeTrees = [];
@@ -128,9 +130,17 @@
       this.stampedeStars = [];
       this.stampedeEagles = [];
       this.stampedePhase = 0;
-      this.sensorTiltX = 0;
+
+      // Sensor Coupling & Multi-Axis Parallax Engine
+      this.sensorTiltX = 0;       // Current smoothed roll tilt (-35 to +35 deg)
       this.targetTiltX = 0;
+      this.sensorTiltY = 0;       // Current smoothed pitch tilt (-30 to +30 deg)
+      this.targetTiltY = 0;
+      this.sensorSteerTilt = 0;   // Centrifugal roll inertia during vehicle turns
+      this.sensorAccel = 0;       // Speed acceleration / deceleration delta
+      this.lastSpeedMph = 0;
       this.lastHeading = 0;
+      this._prevKittHeading = 0;
       this.swayAngle = 0;
 
       // Bound event listeners
@@ -138,6 +148,8 @@
       this._onPointerDown = this._onPointerDown.bind(this);
       this._onPointerMove = this._onPointerMove.bind(this);
       this._onPointerUp = this._onPointerUp.bind(this);
+      this._onCanvasPointerMove = this._onCanvasPointerMove.bind(this);
+      this._onCanvasPointerLeave = this._onCanvasPointerLeave.bind(this);
       this._onDeviceOrientation = this._onDeviceOrientation.bind(this);
       this._onDeviceMotion = this._onDeviceMotion.bind(this);
       this._loop = this._loop.bind(this);
@@ -168,6 +180,7 @@
 
       this._initStarfield();
       this._initUnderwater();
+      this._initKitt();
       this._bindEvents();
       this._updateDimensions();
     }
@@ -242,32 +255,26 @@
         });
       }
 
-      // 4. ARK STAMPEDE Wildlife Ecosystem ("2 of every animal party" scattered across roadway)
-      // Paired species scattered in joyous celebration
-      const arkSpecies = [
-        'giraffe', 'giraffe',       // Towering Giraffes
-        'snake', 'snake',           // Slithering Desert Snakes
-        'bison', 'bison',           // American Bison
-        'mustang', 'mustang',       // Wild Mustangs
-        'pronghorn', 'pronghorn',   // Pronghorn Antelopes
-        'elk', 'elk',               // Majestic Antlered Elk
-        'ram', 'ram'                // Bighorn Rams
-      ];
-
+      // 4. Wildlife Ecosystem with Staggered Horizon Gallop
+      const allSpecies = ['bison', 'mustang', 'pronghorn', 'elk', 'ram', 'giraffe', 'snake'];
       this.stampedeAnimals = [];
-      for (let i = 0; i < arkSpecies.length; i++) {
-        const species = arkSpecies[i];
+      // Pool of 5 animal slots: 2 to 3 active at staggered depths, remaining in queue
+      for (let i = 0; i < 5; i++) {
+        const species = allSpecies[Math.floor(Math.random() * allSpecies.length)];
+        const isActive = i < 3; // First 3 active, remaining 2 in cooldown queue
+        const drift = (Math.random() - 0.5) * 0.0025;
         this.stampedeAnimals.push({
           species: species,
-          x: (Math.random() - 0.5) * 1.55, // scattered across roadway (-0.78 to 0.78)
-          grazeBaseX: (Math.random() - 0.5) * 1.45,
-          z: Math.random() * 0.9 + 0.08,   // depth 0.08 (far) to 1.0 (near)
-          speedOffset: Math.random() * 0.35 + 0.85,
+          active: isActive,
+          spawnTimer: isActive ? 0 : Math.floor(Math.random() * 90 + 40),
+          x: (Math.random() - 0.5) * 1.4,
+          driftX: drift,
+          facing: drift >= 0 ? -1 : 1,
+          z: isActive ? (0.35 + i * 0.26) : 1.04, // Staggered depths towards horizon
+          speedOffset: Math.random() * 0.28 + 0.86,
           gallopPhase: Math.random() * Math.PI * 2,
-          grazePhase: Math.random() * Math.PI * 2,
-          grazeSpeed: Math.random() * 0.02 + 0.015,
           slitherPhase: Math.random() * Math.PI * 2,
-          size: species === 'giraffe' ? (Math.random() * 0.2 + 1.1) : (species === 'snake' ? (Math.random() * 0.2 + 0.85) : (Math.random() * 0.25 + 0.9)),
+          size: species === 'giraffe' ? (Math.random() * 0.2 + 1.25) : (species === 'snake' ? (Math.random() * 0.2 + 1.1) : (Math.random() * 0.25 + 1.15)),
           tailFlickTimer: Math.random() * 100,
           coatVariant: Math.floor(Math.random() * 3)
         });
@@ -307,51 +314,228 @@
       this.circuitNodes = [];
       this.circuitTraces = [];
       this.dataPackets = [];
-      const w = this.canvas ? this.canvas.width : 400;
-      const h = this.canvas ? this.canvas.height : 300;
+      this.pcbComponents = [];
+      this.pcbTestPoints = [];
+      this.pcbVias = [];
 
-      const cols = 5;
-      const rows = 4;
-      const gridW = w / cols;
-      const gridH = h / rows;
+      // 1. Integrated Circuits (ICs) & Active Hardware Components (Normalized [-1, 1] Coordinates)
+      // Scaled and positioned in safe quadrants so the entire circuit board is visible and clear of HUD overlays
+      this.pcbComponents = [
+        {
+          id: 'u1_cpu',
+          type: 'qfp',
+          name: 'SYNTH-DSP 8800',
+          sub: 'ARM KINETIC-DSP 180MHz',
+          nx: 0.0,
+          ny: 0.0,
+          nw: 0.72,
+          nh: 0.62,
+          pins: 32 // 8 per side
+        },
+        {
+          id: 'u2_eeprom',
+          type: 'soic',
+          name: '24C512',
+          sub: 'EEPROM',
+          nx: 0.68,
+          ny: -0.40,
+          nw: 0.16,
+          nh: 0.18,
+          pins: 8 // 4 per side
+        },
+        {
+          id: 'y1_crystal',
+          type: 'crystal',
+          name: '16.000 MHz',
+          sub: 'OSC',
+          nx: -0.68,
+          ny: -0.40,
+          nw: 0.18,
+          nh: 0.11,
+          pins: 2
+        },
+        {
+          id: 'vr1_reg',
+          type: 'dpack',
+          name: '78M05',
+          sub: '5V REG',
+          nx: -0.70,
+          ny: 0.38,
+          nw: 0.16,
+          nh: 0.14,
+          pins: 3
+        },
+        {
+          id: 'l1_choke',
+          type: 'inductor',
+          name: '10µH',
+          sub: 'CHOKE',
+          nx: -0.46,
+          ny: 0.46,
+          nw: 0.12,
+          nh: 0.12,
+          pins: 2
+        },
+        {
+          id: 'c_bulk',
+          type: 'can_cap',
+          name: '220µF',
+          sub: '25V',
+          nx: -0.22,
+          ny: 0.48,
+          nw: 0.13,
+          nh: 0.13,
+          pins: 2
+        },
+        // SMT 0805 Chip Capacitors & Resistors
+        { id: 'c1', type: 'passive', kind: 'cap', name: 'C1', nx: -0.48, ny: -0.44, nw: 0.045, nh: 0.03 },
+        { id: 'c2', type: 'passive', kind: 'cap', name: 'C2', nx: -0.48, ny: -0.36, nw: 0.045, nh: 0.03 },
+        { id: 'c3', type: 'passive', kind: 'cap', name: 'C3', nx: 0.48, ny: -0.44, nw: 0.045, nh: 0.03 },
+        { id: 'c4', type: 'passive', kind: 'cap', name: 'C4', nx: 0.62, ny: 0.38, nw: 0.045, nh: 0.03 },
+        { id: 'c5', type: 'passive', kind: 'cap', name: 'C5', nx: -0.16, ny: 0.44, nw: 0.045, nh: 0.03 },
+        { id: 'r1', type: 'passive', kind: 'res', name: 'R1', nx: -0.36, ny: -0.46, nw: 0.045, nh: 0.03 },
+        { id: 'r2', type: 'passive', kind: 'res', name: 'R2', nx: 0.36, ny: -0.46, nw: 0.045, nh: 0.03 },
+        { id: 'r3', type: 'passive', kind: 'res', name: 'R3', nx: 0.48, ny: -0.36, nw: 0.045, nh: 0.03 },
+        { id: 'r4', type: 'passive', kind: 'res', name: 'R4', nx: -0.52, ny: -0.04, nw: 0.045, nh: 0.03 },
+        { id: 'r5', type: 'passive', kind: 'res', name: 'R5', nx: 0.52, ny: -0.04, nw: 0.045, nh: 0.03 }
+      ];
 
-      for (let r = 0; r <= rows; r++) {
-        for (let c = 0; c <= cols; c++) {
-          if (Math.random() > 0.4) {
-            this.circuitNodes.push({
-              x: c * gridW + (Math.random() * 20 - 10),
-              y: r * gridH + (Math.random() * 20 - 10),
-              radius: Math.random() > 0.7 ? 3.0 : 1.8,
-              glow: Math.random() * 0.5 + 0.2
-            });
-          }
+      // 2. Telemetry Sensor Test Points (Positioned safely away from HUD buttons and compass)
+      this.pcbTestPoints = [
+        { id: 'TP_CLK', label: 'TP_CLK', sub: '16M OSC', nx: -0.36, ny: -0.50, color: '#22c55e', active: true },
+        { id: 'TP_BUS', label: 'TP_BUS', sub: 'I2C/SPI', nx: 0.36, ny: -0.50, color: '#ffd700', active: true },
+        { id: 'TP_GYRO', label: 'TP_GYRO', sub: 'IMU VEC', nx: -0.76, ny: -0.04, color: '#38bdf8', active: true },
+        { id: 'TP_SPD', label: 'TP_SPD', sub: 'SPEED', nx: 0.76, ny: -0.04, color: '#ffd700', active: true },
+        { id: 'VCC', label: '+5V', sub: 'LDO RAIL', nx: -0.70, ny: 0.60, color: '#ef4444', active: true },
+        { id: 'GND', label: 'GND', sub: 'GROUND', nx: 0.70, ny: 0.60, color: '#22c55e', active: true }
+      ];
+
+      // 3. Plated Through-Hole Vias (Annular Gold Rings with central drill holes)
+      const viaCoords = [
+        [-0.56, -0.48], [-0.44, -0.50], [-0.28, -0.40], [-0.18, -0.34],
+        [0.18, -0.34], [0.28, -0.40], [0.44, -0.50], [0.56, -0.48],
+        [-0.76, -0.20], [-0.76, 0.16], [-0.60, 0.22], [-0.48, 0.32],
+        [0.76, -0.20], [0.76, 0.16], [0.60, 0.22], [0.48, 0.32],
+        [-0.30, 0.54], [-0.14, 0.52], [0.24, 0.52], [0.38, 0.54],
+        [-0.16, -0.33], [0.16, -0.33], [-0.16, 0.33], [0.16, 0.33]
+      ];
+      this.pcbVias = viaCoords.map(([nx, ny], idx) => ({
+        id: `via_${idx}`,
+        nx,
+        ny,
+        radius: 2.8,
+        holeRadius: 1.2,
+        glow: 0.3 + Math.random() * 0.4
+      }));
+
+      // 4. Conductive PCB Traces with 45° Chamfered Doglegs
+      const rawTraces = [
+        // Differential Clock Bus: Crystal Y1 -> Load Caps -> CPU Top Pins
+        {
+          pts: [{nx: -0.59, ny: -0.42}, {nx: -0.48, ny: -0.42}, {nx: -0.38, ny: -0.38}, {nx: -0.22, ny: -0.38}, {nx: -0.22, ny: -0.31}],
+          type: 'clock', width: 1.6, color: '#22c55e', alpha: 0.40
+        },
+        {
+          pts: [{nx: -0.59, ny: -0.38}, {nx: -0.46, ny: -0.38}, {nx: -0.36, ny: -0.35}, {nx: -0.16, ny: -0.35}, {nx: -0.16, ny: -0.31}],
+          type: 'clock', width: 1.6, color: '#22c55e', alpha: 0.40
+        },
+        // High-Speed Data Bus: CPU Top Pins -> EEPROM Memory
+        {
+          pts: [{nx: 0.16, ny: -0.31}, {nx: 0.16, ny: -0.35}, {nx: 0.36, ny: -0.35}, {nx: 0.46, ny: -0.38}, {nx: 0.60, ny: -0.38}],
+          type: 'bus', width: 1.5, color: '#ffd700', alpha: 0.48
+        },
+        {
+          pts: [{nx: 0.22, ny: -0.31}, {nx: 0.22, ny: -0.38}, {nx: 0.38, ny: -0.38}, {nx: 0.48, ny: -0.42}, {nx: 0.60, ny: -0.42}],
+          type: 'bus', width: 1.5, color: '#ffd700', alpha: 0.48
+        },
+        // Speed Telemetry Line: TP_SPD -> R5 -> CPU Right Pin
+        {
+          pts: [{nx: 0.72, ny: -0.04}, {nx: 0.56, ny: -0.04}, {nx: 0.48, ny: -0.04}, {nx: 0.36, ny: -0.04}],
+          type: 'speed', width: 2.0, color: '#ffd700', alpha: 0.55
+        },
+        {
+          pts: [{nx: 0.72, ny: -0.04}, {nx: 0.64, ny: 0.12}, {nx: 0.52, ny: 0.22}, {nx: 0.44, ny: 0.22}, {nx: 0.36, ny: 0.12}],
+          type: 'speed', width: 1.5, color: '#ffd700', alpha: 0.40
+        },
+        // Gyro IMU Line: TP_GYRO -> R4 -> CPU Left Pin
+        {
+          pts: [{nx: -0.72, ny: -0.04}, {nx: -0.56, ny: -0.04}, {nx: -0.48, ny: -0.04}, {nx: -0.36, ny: -0.04}],
+          type: 'gyro', width: 2.0, color: '#38bdf8', alpha: 0.55
+        },
+        {
+          pts: [{nx: -0.72, ny: -0.04}, {nx: -0.64, ny: 0.12}, {nx: -0.52, ny: 0.22}, {nx: -0.44, ny: 0.22}, {nx: -0.36, ny: 0.12}],
+          type: 'gyro', width: 1.5, color: '#38bdf8', alpha: 0.40
+        },
+        // Power Distribution: VCC -> VR1 -> L1 -> C_BULK -> CPU Bottom Power Pins
+        {
+          pts: [{nx: -0.70, ny: 0.56}, {nx: -0.70, ny: 0.46}],
+          type: 'power', width: 2.6, color: '#ef4444', alpha: 0.50
+        },
+        {
+          pts: [{nx: -0.62, ny: 0.38}, {nx: -0.54, ny: 0.46}],
+          type: 'power', width: 2.4, color: '#f59e0b', alpha: 0.50
+        },
+        {
+          pts: [{nx: -0.38, ny: 0.46}, {nx: -0.30, ny: 0.48}],
+          type: 'power', width: 2.4, color: '#ffd700', alpha: 0.45
+        },
+        {
+          pts: [{nx: -0.16, ny: 0.44}, {nx: -0.16, ny: 0.38}, {nx: -0.16, ny: 0.31}],
+          type: 'power', width: 2.4, color: '#ffd700', alpha: 0.45
+        },
+        // Chassis Ground Plane Stitches
+        {
+          pts: [{nx: 0.70, ny: 0.56}, {nx: 0.52, ny: 0.48}, {nx: 0.34, ny: 0.40}, {nx: 0.20, ny: 0.40}, {nx: 0.16, ny: 0.31}],
+          type: 'ground', width: 2.2, color: '#22c55e', alpha: 0.42
+        },
+        // Top Interconnect Stitches
+        {
+          pts: [{nx: -0.34, ny: -0.38}, {nx: -0.26, ny: -0.38}, {nx: -0.18, ny: -0.30}, {nx: -0.12, ny: -0.20}],
+          type: 'bus', width: 1.4, color: '#22c55e', alpha: 0.36
+        },
+        {
+          pts: [{nx: 0.34, ny: -0.38}, {nx: 0.26, ny: -0.38}, {nx: 0.18, ny: -0.30}, {nx: 0.12, ny: -0.20}],
+          type: 'bus', width: 1.4, color: '#ffd700', alpha: 0.36
         }
-      }
+      ];
 
-      for (let i = 0; i < this.circuitNodes.length; i++) {
-        for (let j = i + 1; j < this.circuitNodes.length; j++) {
-          const dx = this.circuitNodes[i].x - this.circuitNodes[j].x;
-          const dy = this.circuitNodes[i].y - this.circuitNodes[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < gridW * 1.4 && (Math.abs(dx) < 15 || Math.abs(dy) < 15 || Math.random() > 0.6)) {
-            this.circuitTraces.push({
-              p1: this.circuitNodes[i],
-              p2: this.circuitNodes[j],
-              alpha: Math.random() * 0.18 + 0.05
-            });
-          }
+      // Pre-compute trace lengths and cumulative segment lengths for smooth packet traveling
+      this.circuitTraces = rawTraces.map((trace, idx) => {
+        let totalLen = 0;
+        const segLens = [];
+        for (let i = 0; i < trace.pts.length - 1; i++) {
+          const dx = trace.pts[i + 1].nx - trace.pts[i].nx;
+          const dy = trace.pts[i + 1].ny - trace.pts[i].ny;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          segLens.push(len);
+          totalLen += len;
         }
-      }
+        return {
+          id: `trace_${idx}`,
+          pts: trace.pts,
+          type: trace.type,
+          width: trace.width,
+          color: trace.color,
+          alpha: trace.alpha,
+          segLens: segLens,
+          totalLen: totalLen,
+          pulseGlow: 0
+        };
+      });
 
-      for (let k = 0; k < 12; k++) {
-        if (this.circuitTraces.length > 0) {
-          const trace = this.circuitTraces[Math.floor(Math.random() * this.circuitTraces.length)];
-          this.dataPackets.push({
-            trace: trace,
-            t: Math.random(),
-            speed: (Math.random() * 0.018 + 0.008)
-          });
-        }
+      // 5. Kinetic Data Packets (Conductive Current Pulses)
+      this.dataPackets = [];
+      const packetColors = ['#ffd700', '#ffd700', '#22c55e', '#38bdf8', '#eab308', '#ffffff'];
+      for (let k = 0; k < 22; k++) {
+        const traceIdx = Math.floor(Math.random() * this.circuitTraces.length);
+        this.dataPackets.push({
+          traceIdx: traceIdx,
+          t: Math.random(),
+          baseSpeed: 0.008 + Math.random() * 0.015,
+          color: packetColors[k % packetColors.length],
+          size: 2.0 + Math.random() * 1.4,
+          trailLen: 0.08 + Math.random() * 0.08
+        });
       }
     }
 
@@ -475,6 +659,8 @@
 
       if (this.canvas) {
         this.canvas.addEventListener('pointerdown', this._onPointerDown);
+        this.canvas.addEventListener('pointermove', this._onCanvasPointerMove);
+        this.canvas.addEventListener('pointerleave', this._onCanvasPointerLeave);
         window.addEventListener('pointermove', this._onPointerMove);
         window.addEventListener('pointerup', this._onPointerUp);
         window.addEventListener('pointercancel', this._onPointerUp);
@@ -484,8 +670,14 @@
     _onDeviceOrientation(e) {
       if (!this.isVisible) return;
       if (e.gamma !== null && !isNaN(e.gamma)) {
-        // gamma is left-to-right tilt (-90 to 90 deg)
+        // gamma is left-to-right roll (-90 to 90 deg)
         this.targetTiltX = Math.max(-35, Math.min(35, e.gamma));
+      }
+      if (e.beta !== null && !isNaN(e.beta)) {
+        // beta is front-to-back pitch (-180 to 180 deg)
+        // Mounted phone on dashboard typically sits around 50° to 70° from flat
+        const pitchDelta = e.beta - 55;
+        this.targetTiltY = Math.max(-30, Math.min(30, pitchDelta));
       }
     }
 
@@ -495,6 +687,25 @@
         const ax = e.accelerationIncludingGravity.x || 0;
         this.targetTiltX = Math.max(-35, Math.min(35, ax * 3.5));
       }
+      if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.y !== null && !isNaN(e.accelerationIncludingGravity.y)) {
+        const ay = e.accelerationIncludingGravity.y || 0;
+        this.targetTiltY = Math.max(-30, Math.min(30, (ay - 7.5) * 3.5));
+      }
+    }
+
+    _onCanvasPointerMove(e) {
+      if (!this.isVisible || this.isDragging) return;
+      const rect = this.canvas.getBoundingClientRect();
+      const mx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+      const my = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+      this.targetTiltX = Math.max(-32, Math.min(32, mx * 28));
+      this.targetTiltY = Math.max(-28, Math.min(28, my * 24));
+    }
+
+    _onCanvasPointerLeave() {
+      if (!this.isVisible || this.isDragging) return;
+      this.targetTiltX = 0;
+      this.targetTiltY = 0;
     }
 
     _updateDimensions() {
@@ -1284,7 +1495,7 @@
     }
 
     /* ------------------------------------------------------------- */
-    /* CYBER ORBIT SYNTH & TRAVELING COMPASS HALO (MAP EMBED)       */
+    /* CYBER ORBIT SYNTH & SENSOR-COUPLED PARALLAX PCB ENGINE      */
     /* ------------------------------------------------------------- */
     _renderKittMode() {
       const ctx = this.ctx;
@@ -1292,56 +1503,489 @@
       const h = this.canvas.height;
       const cx = this.centerX;
       const cy = this.centerY;
-      const speed = Math.round(this.speedMph);
+
+      // 1. Kinetic Sensor Physics & Acceleration Telemetry Tracking
+      this.sensorTiltX += (this.targetTiltX - this.sensorTiltX) * 0.12;
+      this.sensorTiltY += (this.targetTiltY - this.sensorTiltY) * 0.12;
+
+      // Heading steering delta centrifugal roll inertia
+      let headingDelta = (this.heading - (this._prevKittHeading !== undefined ? this._prevKittHeading : this.heading));
+      if (headingDelta > 180) headingDelta -= 360;
+      if (headingDelta < -180) headingDelta += 360;
+      this._prevKittHeading = this.heading;
+      const steerInertia = Math.max(-18, Math.min(18, -headingDelta * 2.2));
+      this.sensorSteerTilt += (steerInertia - this.sensorSteerTilt) * 0.15;
+
+      const totalTiltX = this.sensorTiltX + this.sensorSteerTilt;
+      const totalTiltY = this.sensorTiltY;
+
+      // Speed & Acceleration telemetry coupling
+      const speed = Math.round(this.speedMph || 0);
+      const accelDelta = speed - (this.lastSpeedMph !== undefined ? this.lastSpeedMph : speed);
+      this.lastSpeedMph = speed;
+      this.sensorAccel += (accelDelta - this.sensorAccel) * 0.16;
+
+      const isAccelerating = this.sensorAccel > 0.4;
+      const isBraking = this.sensorAccel < -0.4;
       const isSpm = speed >= 65;
+
+      // Perspective Projection Coordinate Helper for Multi-Layer Parallax
+      const project = (nx, ny, zOffset) => {
+        const px = cx + nx * (w * 0.47) + totalTiltX * zOffset * this.dpr * 0.85;
+        const py = cy + ny * (h * 0.45) + totalTiltY * zOffset * this.dpr * 0.85;
+        return { x: px, y: py };
+      };
 
       ctx.clearRect(0, 0, w, h);
 
-      // Deep automotive background
-      ctx.fillStyle = '#030206';
+      // -------------------------------------------------------------
+      // LAYER 0: Substrate & Silkscreen Layer (Depth Z = -0.35)
+      // -------------------------------------------------------------
+      const subOffX = totalTiltX * -0.35 * this.dpr * 0.85;
+      const subOffY = totalTiltY * -0.35 * this.dpr * 0.85;
+
+      // Deep automotive soldermask fiberglass background
+      const pcbGrad = ctx.createLinearGradient(0, 0, w, h);
+      pcbGrad.addColorStop(0, '#021207');
+      pcbGrad.addColorStop(0.5, '#03170a');
+      pcbGrad.addColorStop(1, '#020e06');
+      ctx.fillStyle = pcbGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // 1. Automotive Circuit Traces & Solder Nodes (Emerald Green & Gold PCB traces)
+      // Copper Ground Plane Hatch Patterns (Faint 45° diagonal grid in corners)
       ctx.save();
-      ctx.lineWidth = 1.2 * this.dpr;
-      for (let i = 0; i < this.circuitTraces.length; i++) {
-        const t = this.circuitTraces[i];
+      ctx.strokeStyle = 'rgba(21, 128, 61, 0.08)';
+      ctx.lineWidth = 1.0 * this.dpr;
+      const hatchStep = 18 * this.dpr;
+      for (let x = -h; x < w + h; x += hatchStep) {
         ctx.beginPath();
-        ctx.moveTo(t.p1.x, t.p1.y);
-        ctx.lineTo(t.p2.x, t.p2.y);
-        ctx.strokeStyle = `rgba(34, 197, 94, ${t.alpha * (speed > 25 ? 1.6 : 1.1)})`;
+        ctx.moveTo(x + subOffX * 0.5, 0);
+        ctx.lineTo(x + h + subOffX * 0.5, h);
         ctx.stroke();
       }
 
-      for (let i = 0; i < this.circuitNodes.length; i++) {
-        const n = this.circuitNodes[i];
+      // Outer Silkscreen Alignment Frame & Corner Fiducials
+      const framePad = 16 * this.dpr;
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.22)';
+      ctx.lineWidth = 1.2 * this.dpr;
+      ctx.strokeRect(framePad + subOffX, framePad + subOffY, w - framePad * 2, h - framePad * 2);
+
+      // Corner Fiducial Crosshairs
+      const fiducials = [
+        { x: framePad + 14 * this.dpr, y: framePad + 14 * this.dpr },
+        { x: w - framePad - 14 * this.dpr, y: framePad + 14 * this.dpr },
+        { x: framePad + 14 * this.dpr, y: h - framePad - 14 * this.dpr },
+        { x: w - framePad - 14 * this.dpr, y: h - framePad - 14 * this.dpr }
+      ];
+      ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)';
+      ctx.lineWidth = 1.2 * this.dpr;
+      fiducials.forEach(f => {
+        const fx = f.x + subOffX;
+        const fy = f.y + subOffY;
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.radius * this.dpr, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(234, 179, 8, ${n.glow * 1.2})`;
-        ctx.shadowColor = '#eab308';
-        ctx.shadowBlur = 4 * this.dpr;
+        ctx.moveTo(fx - 6 * this.dpr, fy);
+        ctx.lineTo(fx + 6 * this.dpr, fy);
+        ctx.moveTo(fx, fy - 6 * this.dpr);
+        ctx.lineTo(fx, fy + 6 * this.dpr);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(fx, fy, 4 * this.dpr, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      // Silkscreen Board Legend & Engineering Text (Positioned safely away from HUD compass/expand buttons)
+      ctx.font = `700 ${Math.round(8.5 * this.dpr)}px "Courier New", monospace`;
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.35)';
+      ctx.textAlign = 'center';
+      ctx.fillText('[ NOMAD KINETIC-DSP // 180MHz ]', cx + subOffX, cy - 62 * this.dpr + subOffY);
+      ctx.fillText('[ SENSORY BUS REV 3.2 // IMU COUPLED ]', cx + subOffX, cy + 68 * this.dpr + subOffY);
+      ctx.restore();
+
+      // -------------------------------------------------------------
+      // LAYER 1: Conductive Copper Traces & Solder Vias (Depth Z = 0.0)
+      // -------------------------------------------------------------
+      ctx.save();
+      for (let i = 0; i < this.circuitTraces.length; i++) {
+        const trace = this.circuitTraces[i];
+        if (trace.pts.length < 2) continue;
+
+        ctx.beginPath();
+        const p0 = project(trace.pts[0].nx, trace.pts[0].ny, 0.0);
+        ctx.moveTo(p0.x, p0.y);
+        for (let j = 1; j < trace.pts.length; j++) {
+          const pj = project(trace.pts[j].nx, trace.pts[j].ny, 0.0);
+          ctx.lineTo(pj.x, pj.y);
+        }
+
+        // Trace glow & line styling
+        let traceAlpha = trace.alpha;
+        if (speed > 25) traceAlpha *= 1.35;
+        if (isAccelerating) traceAlpha *= 1.6;
+        if (isSpm) traceAlpha *= 1.8;
+
+        ctx.lineWidth = trace.width * this.dpr;
+        ctx.strokeStyle = trace.color;
+        ctx.globalAlpha = Math.min(0.95, traceAlpha);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        // High-energy core highlight for active lines
+        if (isAccelerating || speed > 40) {
+          ctx.lineWidth = Math.max(0.8, trace.width * 0.45) * this.dpr;
+          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = 0.25;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1.0;
+
+      // Annular Plated Through-Hole Vias with Realistic Metallic Specular Highlight
+      const lightX = -totalTiltX / 35;
+      const lightY = -totalTiltY / 30 - 0.5;
+      const glintMag = Math.sqrt(lightX * lightX + lightY * lightY) || 1;
+      const glintNormX = lightX / glintMag;
+      const glintNormY = lightY / glintMag;
+
+      for (let i = 0; i < this.pcbVias.length; i++) {
+        const via = this.pcbVias[i];
+        const vpt = project(via.nx, via.ny, 0.0);
+
+        // Outer Gold Annular Ring
+        ctx.beginPath();
+        ctx.arc(vpt.x, vpt.y, via.radius * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = speed > 25 ? '#ffd700' : '#ca8a04';
         ctx.fill();
-        ctx.shadowBlur = 0;
+
+        // Outer Copper Rim
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 0.8 * this.dpr;
+        ctx.stroke();
+
+        // Shifting Metallic Specular Glint
+        const glintX = vpt.x + glintNormX * (via.radius * 0.45 * this.dpr);
+        const glintY = vpt.y + glintNormY * (via.radius * 0.45 * this.dpr);
+        ctx.beginPath();
+        ctx.arc(glintX, glintY, via.radius * 0.35 * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        // Central Dark Drill Hole
+        ctx.beginPath();
+        ctx.arc(vpt.x, vpt.y, via.holeRadius * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = '#020804';
+        ctx.fill();
       }
 
-      // Traveling micro-data packets (Gold & Yellow)
-      for (let i = 0; i < this.dataPackets.length; i++) {
-        const p = this.dataPackets[i];
-        p.t += p.speed * (1 + speed * 0.04);
-        if (p.t > 1) p.t = 0;
-        const px = p.trace.p1.x + (p.trace.p2.x - p.trace.p1.x) * p.t;
-        const py = p.trace.p1.y + (p.trace.p2.y - p.trace.p1.y) * p.t;
+      // Sensor Test Points (Gold Annular Pads with Silkscreen Crosshair & Legend)
+      for (let i = 0; i < this.pcbTestPoints.length; i++) {
+        const tp = this.pcbTestPoints[i];
+        const tpt = project(tp.nx, tp.ny, 0.0);
+
+        // Outer Glow
         ctx.beginPath();
-        ctx.arc(px, py, 2.2 * this.dpr, 0, Math.PI * 2);
+        ctx.arc(tpt.x, tpt.y, 7.0 * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = tp.color;
+        ctx.shadowColor = tp.color;
+        ctx.shadowBlur = 8 * this.dpr;
+        ctx.globalAlpha = 0.35;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+
+        // Gold Test Pad Ring
+        ctx.beginPath();
+        ctx.arc(tpt.x, tpt.y, 4.5 * this.dpr, 0, Math.PI * 2);
         ctx.fillStyle = '#ffd700';
-        ctx.shadowColor = '#eab308';
-        ctx.shadowBlur = 6 * this.dpr;
+        ctx.fill();
+
+        // Center Probe Indent
+        ctx.beginPath();
+        ctx.arc(tpt.x, tpt.y, 1.8 * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+
+        // Silkscreen Label
+        ctx.font = `800 ${Math.round(8.5 * this.dpr)}px "Courier New", monospace`;
+        ctx.fillStyle = '#f8fafc';
+        ctx.textAlign = 'center';
+        ctx.fillText(tp.label, tpt.x, tpt.y - 8 * this.dpr);
+        ctx.font = `700 ${Math.round(6.5 * this.dpr)}px "Courier New", monospace`;
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+        ctx.fillText(tp.sub, tpt.x, tpt.y + 11 * this.dpr);
+      }
+      ctx.restore();
+
+      // -------------------------------------------------------------
+      // LAYER 1.5: Kinetic Current & Signal Pulses (Conductive Data Packets)
+      // -------------------------------------------------------------
+      ctx.save();
+      const packetSpeedMultiplier = 1.0 + (speed / 40) * 2.4 + (isAccelerating ? 1.0 : 0);
+
+      // Helper to interpolate position along multi-segment trace
+      const getTracePointAt = (trace, tNorm) => {
+        const targetDist = ((tNorm % 1 + 1) % 1) * trace.totalLen;
+        let accum = 0;
+        for (let s = 0; s < trace.segLens.length; s++) {
+          const segLen = trace.segLens[s];
+          if (accum + segLen >= targetDist || s === trace.segLens.length - 1) {
+            const segT = segLen > 0 ? (targetDist - accum) / segLen : 0;
+            const p1 = trace.pts[s];
+            const p2 = trace.pts[s + 1];
+            const nx = p1.nx + (p2.nx - p1.nx) * segT;
+            const ny = p1.ny + (p2.ny - p1.ny) * segT;
+            return { nx, ny };
+          }
+          accum += segLen;
+        }
+        return trace.pts[trace.pts.length - 1];
+      };
+
+      for (let k = 0; k < this.dataPackets.length; k++) {
+        const pkt = this.dataPackets[k];
+        const trace = this.circuitTraces[pkt.traceIdx];
+        if (!trace || trace.totalLen === 0) continue;
+
+        // Progress packet along trace with telemetry coupling
+        pkt.t = (pkt.t + pkt.baseSpeed * packetSpeedMultiplier) % 1.0;
+
+        // Head point
+        const headNorm = getTracePointAt(trace, pkt.t);
+        const headPt = project(headNorm.nx, headNorm.ny, 0.0);
+
+        // Fading tail segments along trace
+        const numTailSegs = 4;
+        for (let s = 1; s <= numTailSegs; s++) {
+          const tailT = pkt.t - s * (pkt.trailLen / numTailSegs);
+          const tailNorm = getTracePointAt(trace, tailT);
+          const tailPt = project(tailNorm.nx, tailNorm.ny, 0.0);
+
+          ctx.beginPath();
+          ctx.arc(tailPt.x, tailPt.y, Math.max(0.8, (pkt.size - s * 0.35)) * this.dpr, 0, Math.PI * 2);
+          ctx.fillStyle = pkt.color;
+          ctx.globalAlpha = (1.0 - s / (numTailSegs + 1)) * 0.45;
+          ctx.fill();
+        }
+
+        // Glowing Packet Head
+        ctx.beginPath();
+        ctx.arc(headPt.x, headPt.y, pkt.size * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = pkt.color;
+        ctx.shadowColor = pkt.color;
+        ctx.shadowBlur = (isAccelerating ? 12 : 6) * this.dpr;
+        ctx.globalAlpha = 1.0;
+        ctx.fill();
+
+        // Hot White Core
+        ctx.beginPath();
+        ctx.arc(headPt.x, headPt.y, Math.max(0.8, pkt.size * 0.45) * this.dpr, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
         ctx.fill();
         ctx.shadowBlur = 0;
       }
       ctx.restore();
 
-      // 2. Hyper-Drive (S.P.M.) Warp Rays
+      // Regenerative Braking Energy Dissipation Surge (Reverse Pulses)
+      if (isBraking) {
+        ctx.save();
+        ctx.lineWidth = 3.0 * this.dpr;
+        ctx.strokeStyle = '#f43f5e';
+        ctx.shadowColor = '#f43f5e';
+        ctx.shadowBlur = 14 * this.dpr;
+        ctx.globalAlpha = Math.min(0.8, Math.abs(this.sensorAccel) * 0.3);
+        const pCap = project(-0.64, 0.74, 0.0);
+        ctx.beginPath();
+        ctx.arc(pCap.x, pCap.y, (18 + (Date.now() % 400) * 0.08) * this.dpr, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // -------------------------------------------------------------
+      // LAYER 2: SMT Hardware Components & ICs (Depth Z = +0.55)
+      // -------------------------------------------------------------
+      ctx.save();
+      const icZ = 0.55;
+      const compShadowOffX = -totalTiltX * 0.45 * this.dpr;
+      const compShadowOffY = -totalTiltY * 0.45 * this.dpr + 3 * this.dpr;
+
+      for (let i = 0; i < this.pcbComponents.length; i++) {
+        const comp = this.pcbComponents[i];
+        const cpt = project(comp.nx, comp.ny, icZ);
+        const cw = comp.nw * (w * 0.47);
+        const ch = comp.nh * (h * 0.45);
+        const cx0 = cpt.x - cw / 2;
+        const cy0 = cpt.y - ch / 2;
+
+        if (comp.type === 'qfp') {
+          // Central Microprocessor / DSP Chip (SYNTH-DSP 8800)
+          // 1. Gull-wing solder pins
+          const pinsPerSide = 8;
+          ctx.fillStyle = '#e2e8f0';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 0.6 * this.dpr;
+
+          // Top and bottom pins
+          for (let p = 0; p < pinsPerSide; p++) {
+            const px = cx0 + (p + 1) * (cw / (pinsPerSide + 1));
+            // Top pin
+            ctx.fillRect(px - 1.5 * this.dpr, cy0 - 6 * this.dpr, 3 * this.dpr, 6 * this.dpr);
+            // Bottom pin
+            ctx.fillRect(px - 1.5 * this.dpr, cy0 + ch, 3 * this.dpr, 6 * this.dpr);
+          }
+          // Left and right pins (8 per side = 32 total QFP pins)
+          for (let p = 0; p < 8; p++) {
+            const py = cy0 + (p + 1) * (ch / (8 + 1));
+            // Left pin
+            ctx.fillRect(cx0 - 6 * this.dpr, py - 1.5 * this.dpr, 6 * this.dpr, 3 * this.dpr);
+            // Right pin
+            ctx.fillRect(cx0 + cw, py - 1.5 * this.dpr, 6 * this.dpr, 3 * this.dpr);
+          }
+
+          // 2. Chip Epoxy Package Body with Dynamic Drop Shadow
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+          ctx.shadowBlur = 12 * this.dpr;
+          ctx.shadowOffsetX = compShadowOffX;
+          ctx.shadowOffsetY = compShadowOffY;
+
+          ctx.fillStyle = '#06120a';
+          ctx.strokeStyle = '#1b3b27';
+          ctx.lineWidth = 1.6 * this.dpr;
+          ctx.beginPath();
+          ctx.roundRect(cx0, cy0, cw, ch, 6 * this.dpr);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // Pin 1 Index Dot (Chamfered Top-Left)
+          ctx.beginPath();
+          ctx.arc(cx0 + 10 * this.dpr, cy0 + 10 * this.dpr, 2.8 * this.dpr, 0, Math.PI * 2);
+          ctx.fillStyle = '#eab308';
+          ctx.fill();
+
+        } else if (comp.type === 'soic') {
+          // SOIC-8 EEPROM Chip
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+          ctx.shadowBlur = 8 * this.dpr;
+          ctx.shadowOffsetX = compShadowOffX;
+          ctx.shadowOffsetY = compShadowOffY;
+
+          ctx.fillStyle = '#0f172a';
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.2 * this.dpr;
+          ctx.beginPath();
+          ctx.roundRect(cx0, cy0, cw, ch, 4 * this.dpr);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // 8 Gull-wing pins
+          ctx.fillStyle = '#e2e8f0';
+          for (let p = 0; p < 4; p++) {
+            const py = cy0 + (p + 0.5) * (ch / 4);
+            ctx.fillRect(cx0 - 4 * this.dpr, py - 1.2 * this.dpr, 4 * this.dpr, 2.4 * this.dpr);
+            ctx.fillRect(cx0 + cw, py - 1.2 * this.dpr, 4 * this.dpr, 2.4 * this.dpr);
+          }
+
+          ctx.font = `800 ${Math.round(8 * this.dpr)}px "Courier New", monospace`;
+          ctx.fillStyle = '#e2e8f0';
+          ctx.textAlign = 'center';
+          ctx.fillText(comp.name, cpt.x, cpt.y + 3 * this.dpr);
+
+        } else if (comp.type === 'crystal') {
+          // Quartz Crystal Can (Brushed Aluminum)
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+          ctx.shadowBlur = 8 * this.dpr;
+          ctx.shadowOffsetX = compShadowOffX;
+          ctx.shadowOffsetY = compShadowOffY;
+
+          const crGrad = ctx.createLinearGradient(cx0, cy0, cx0, cy0 + ch);
+          crGrad.addColorStop(0, '#94a3b8');
+          crGrad.addColorStop(0.5, '#e2e8f0');
+          crGrad.addColorStop(1, '#64748b');
+          ctx.fillStyle = crGrad;
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 1.2 * this.dpr;
+          ctx.beginPath();
+          ctx.roundRect(cx0, cy0, cw, ch, ch / 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.font = `800 ${Math.round(8 * this.dpr)}px "Courier New", monospace`;
+          ctx.fillStyle = '#0f172a';
+          ctx.textAlign = 'center';
+          ctx.fillText(comp.name, cpt.x, cpt.y + 3 * this.dpr);
+
+        } else if (comp.type === 'dpack') {
+          // Power Regulator DPAK
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(cx0, cy0, cw, ch);
+          // Heat sink tab
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(cx0 + 2 * this.dpr, cy0 - 4 * this.dpr, cw - 4 * this.dpr, 4 * this.dpr);
+          ctx.font = `700 ${Math.round(7.5 * this.dpr)}px "Courier New", monospace`;
+          ctx.fillStyle = '#f8fafc';
+          ctx.textAlign = 'center';
+          ctx.fillText(comp.name, cpt.x, cpt.y + 2 * this.dpr);
+
+        } else if (comp.type === 'inductor') {
+          // Choke Inductor Coil
+          ctx.beginPath();
+          ctx.arc(cpt.x, cpt.y, cw / 2, 0, Math.PI * 2);
+          ctx.fillStyle = '#0f172a';
+          ctx.fill();
+          ctx.strokeStyle = '#b45309';
+          ctx.lineWidth = 2.0 * this.dpr;
+          ctx.stroke();
+          ctx.font = `700 ${Math.round(7 * this.dpr)}px "Courier New", monospace`;
+          ctx.fillStyle = '#eab308';
+          ctx.textAlign = 'center';
+          ctx.fillText('10µH', cpt.x, cpt.y + 3 * this.dpr);
+
+        } else if (comp.type === 'can_cap') {
+          // Bulk Electrolytic Can Capacitor
+          ctx.beginPath();
+          ctx.arc(cpt.x, cpt.y, cw / 2, 0, Math.PI * 2);
+          ctx.fillStyle = '#1e293b';
+          ctx.fill();
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 1.4 * this.dpr;
+          ctx.stroke();
+          // Negative polarity stripe
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(cpt.x - cw / 2, cpt.y - ch / 2, cw * 0.3, ch);
+          ctx.font = `700 ${Math.round(6.5 * this.dpr)}px "Courier New", monospace`;
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.fillText('220µF', cpt.x, cpt.y + 2.5 * this.dpr);
+
+        } else if (comp.type === 'passive') {
+          // SMT 0805 Passives (Capacitors = Tan, Resistors = Black)
+          const bodyColor = comp.kind === 'cap' ? '#d4a373' : '#111827';
+          ctx.fillStyle = bodyColor;
+          ctx.fillRect(cx0, cy0, cw, ch);
+
+          // Silver Solder End Caps
+          ctx.fillStyle = '#e2e8f0';
+          const capW = cw * 0.28;
+          ctx.fillRect(cx0, cy0, capW, ch);
+          ctx.fillRect(cx0 + cw - capW, cy0, capW, ch);
+
+          // Tiny Silkscreen Label
+          ctx.font = `700 ${Math.round(6.5 * this.dpr)}px "Courier New", monospace`;
+          ctx.fillStyle = 'rgba(226, 232, 240, 0.7)';
+          ctx.textAlign = 'center';
+          ctx.fillText(comp.name, cpt.x, cy0 - 3 * this.dpr);
+        }
+      }
+      ctx.restore();
+
+      // -------------------------------------------------------------
+      // HYPER-DRIVE (S.P.M.) WARP RAYS (Radial bursts from CPU)
+      // -------------------------------------------------------------
       if (isSpm) {
         this.spmPhase += 0.08;
         ctx.save();
@@ -1364,7 +2008,9 @@
         ctx.restore();
       }
 
-      // 3. Center Cyber Orbit Equalizer + Traveling Compass Halo
+      // -------------------------------------------------------------
+      // LAYER 3: Floating Cyber Orbit HUD Equalizer Bezel (Depth Z = +1.15)
+      // -------------------------------------------------------------
       this.kittCadencePhase += 0.08 + (speed > 25 ? 0.05 : 0);
       const rawVoice = Math.pow(Math.abs(Math.sin(this.kittCadencePhase * 2.5) * Math.cos(this.kittCadencePhase * 1.3)), 1.5);
       const amp = Math.max(0.15, Math.min(1.0, rawVoice + (speed > 0 ? 0.25 : 0.08)));
@@ -1380,87 +2026,102 @@
       }
 
       ctx.save();
-      // Scaled up box size for high visibility on dashboards
-      const boxW = Math.min(300 * this.dpr, w * 0.84);
-      const boxH = Math.min(170 * this.dpr, h * 0.68);
-      const boxX = cx - boxW / 2;
-      const boxY = cy - boxH / 2;
-      const cornerR = 14 * this.dpr;
+      const hudZ = 0.65;
+      const hudCenterX = cx + totalTiltX * hudZ * this.dpr * 0.85;
+      const hudCenterY = cy + totalTiltY * hudZ * this.dpr * 0.85;
+
+      // Precision Cyber Micro-Display Bezel (Embedded over central DSP package)
+      const boxW = Math.min(168 * this.dpr, w * 0.44);
+      const boxH = Math.min(106 * this.dpr, h * 0.38);
+      const boxX = hudCenterX - boxW / 2;
+      const boxY = hudCenterY - boxH / 2;
+      const cornerR = 7 * this.dpr;
 
       // Compass responsive orbital traveling speed & direction
       const turnVel = (this.heading - (this._prevHeading || this.heading));
       this._prevHeading = this.heading;
-      let travelDir = 1; // 1 = clockwise, -1 = counter-clockwise
+      let travelDir = 1;
       if (turnVel < -0.2) travelDir = -1;
       else if (turnVel > 0.2) travelDir = 1;
 
       const orbitSpeed = (0.005 + Math.min(0.015, speed * 0.0003) + Math.abs(turnVel) * 0.002) * travelDir;
       this.kittScannerPos = ((this.kittScannerPos + orbitSpeed) % 1 + 1) % 1;
 
-      // Background Bezel
-      ctx.fillStyle = 'rgba(8, 1, 3, 0.94)';
+      // Floating Bezel Soft Shadow
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+      ctx.shadowBlur = 14 * this.dpr;
+      ctx.shadowOffsetX = -totalTiltX * 0.5 * this.dpr;
+      ctx.shadowOffsetY = -totalTiltY * 0.5 * this.dpr + 4 * this.dpr;
+
+      // Background Bezel Housing (Subtle dark emerald glass)
+      const dispGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+      dispGrad.addColorStop(0, 'rgba(4, 18, 10, 0.88)');
+      dispGrad.addColorStop(1, 'rgba(2, 10, 6, 0.94)');
+      ctx.fillStyle = dispGrad;
       ctx.beginPath();
       ctx.roundRect(boxX, boxY, boxW, boxH, cornerR);
       ctx.fill();
-      ctx.shadowColor = isSpm ? '#ffd700' : '#ff0033';
-      ctx.shadowBlur = 18 * this.dpr;
-      ctx.strokeStyle = isSpm ? '#ffd700' : '#ff0033';
-      ctx.lineWidth = 2.0 * this.dpr;
+
+      // Glowing Rim Bezel
+      const activeThemeColor = isSpm ? '#ffd700' : (isAccelerating ? '#f59e0b' : (speed > 25 ? '#ff3344' : '#22c55e'));
+      ctx.shadowColor = activeThemeColor;
+      ctx.shadowBlur = 10 * this.dpr;
+      ctx.strokeStyle = activeThemeColor;
+      ctx.lineWidth = 1.4 * this.dpr;
       ctx.stroke();
       ctx.shadowBlur = 0;
 
       // Traveling Halo Beads around the rounded rectangle frame
-      const numBeads = 28;
+      const numBeads = 20;
       for (let b = 0; b < numBeads; b++) {
         const beadT = b / numBeads;
         let diff = Math.abs(beadT - this.kittScannerPos);
         if (diff > 0.5) diff = 1.0 - diff;
 
-        // Perimeter Point calculation
         const beadPt = this._getRoundedRectPt(beadT, boxX, boxY, boxW, boxH, cornerR);
 
-        if (diff < 0.12) {
-          const intensity = 1.0 - (diff / 0.12);
+        if (diff < 0.14) {
+          const intensity = 1.0 - (diff / 0.14);
           ctx.beginPath();
-          ctx.arc(beadPt.x, beadPt.y, 4.0 * this.dpr, 0, Math.PI * 2);
-          ctx.fillStyle = isSpm ? '#ffd700' : '#ff3344';
-          ctx.shadowColor = isSpm ? '#ffd700' : '#ff0033';
-          ctx.shadowBlur = intensity * 12 * this.dpr;
+          ctx.arc(beadPt.x, beadPt.y, 3.2 * this.dpr, 0, Math.PI * 2);
+          ctx.fillStyle = activeThemeColor;
+          ctx.shadowColor = activeThemeColor;
+          ctx.shadowBlur = intensity * 10 * this.dpr;
           ctx.fill();
 
           if (intensity > 0.7) {
             ctx.beginPath();
-            ctx.arc(beadPt.x, beadPt.y, 1.8 * this.dpr, 0, Math.PI * 2);
+            ctx.arc(beadPt.x, beadPt.y, 1.4 * this.dpr, 0, Math.PI * 2);
             ctx.fillStyle = '#ffffff';
             ctx.fill();
           }
           ctx.shadowBlur = 0;
         } else {
           ctx.beginPath();
-          ctx.arc(beadPt.x, beadPt.y, 1.6 * this.dpr, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 30, 40, 0.25)';
+          ctx.arc(beadPt.x, beadPt.y, 1.2 * this.dpr, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.22)';
           ctx.fill();
         }
       }
 
-      // Title header (Clear, readable font)
-      ctx.font = `900 ${Math.round(13.5 * this.dpr)}px "Courier New", monospace`;
-      ctx.fillStyle = isSpm ? '#ffd700' : '#ffffff';
-      ctx.shadowColor = isSpm ? '#ffd700' : '#22c55e';
-      ctx.shadowBlur = 8 * this.dpr;
+      // Title header
+      ctx.font = `900 ${Math.round(10.5 * this.dpr)}px "Courier New", monospace`;
+      ctx.fillStyle = activeThemeColor;
+      ctx.shadowColor = activeThemeColor;
+      ctx.shadowBlur = 6 * this.dpr;
       ctx.textAlign = 'center';
-      ctx.fillText('SYNTHOMATIC', cx, boxY + 22 * this.dpr);
+      ctx.fillText('SYNTHOMATIC', hudCenterX, boxY + 15 * this.dpr);
       ctx.shadowBlur = 0;
 
-      // 3 Columns: Left, Center, Right
+      // 3 Columns: Left, Center, Right Equalizer
       const numCols = 3;
-      const colWidth = (boxW - 60 * this.dpr) / numCols;
-      const colGap = 12 * this.dpr;
-      const leftStartX = cx - (numCols * colWidth + (numCols - 1) * colGap) / 2;
+      const colWidth = (boxW - 32 * this.dpr) / numCols;
+      const colGap = 6 * this.dpr;
+      const leftStartX = hudCenterX - (numCols * colWidth + (numCols - 1) * colGap) / 2;
 
-      const segmentsPerCol = [10, 12, 10];
-      const segH = 6 * this.dpr;
-      const segG = 3 * this.dpr;
+      const segmentsPerCol = [8, 10, 8];
+      const segH = 3.8 * this.dpr;
+      const segG = 2.0 * this.dpr;
 
       for (let c = 0; c < numCols; c++) {
         const colX = leftStartX + c * (colWidth + colGap);
@@ -1469,7 +2130,7 @@
         const midIndex = totalSegs / 2;
 
         const colTotalHeight = totalSegs * segH + (totalSegs - 1) * segG;
-        const colStartY = boxY + 28 * this.dpr + (boxH - 48 * this.dpr - colTotalHeight) / 2;
+        const colStartY = boxY + 18 * this.dpr + (boxH - 46 * this.dpr - colTotalHeight) / 2;
 
         for (let s = 0; s < totalSegs; s++) {
           const sy = colStartY + s * (segH + segG);
@@ -1477,36 +2138,46 @@
           const isActive = distFromMid < activeCount;
 
           if (isActive) {
-            ctx.fillStyle = isSpm ? '#ffd700' : '#ff0033';
-            ctx.shadowColor = isSpm ? '#ffd700' : '#ff0033';
-            ctx.shadowBlur = 10 * this.dpr;
+            ctx.fillStyle = activeThemeColor;
+            ctx.shadowColor = activeThemeColor;
+            ctx.shadowBlur = 8 * this.dpr;
             ctx.fillRect(colX, sy, colWidth, segH);
 
             // Core Hot White Center
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(colX + 4 * this.dpr, sy + 1.5 * this.dpr, colWidth - 8 * this.dpr, segH - 3 * this.dpr);
+            ctx.fillRect(colX + 3 * this.dpr, sy + 1 * this.dpr, colWidth - 6 * this.dpr, segH - 2 * this.dpr);
             ctx.shadowBlur = 0;
           } else {
-            ctx.fillStyle = 'rgba(50, 6, 12, 0.45)';
+            ctx.fillStyle = 'rgba(15, 45, 25, 0.40)';
             ctx.fillRect(colX, sy, colWidth, segH);
           }
         }
       }
 
-      // Footer state label (Large, clear typography)
+      // Footer state label
       let stateLabel = 'STANDBY';
       let stateColor = '#22c55e';
       if (speed > 64) { stateLabel = 'HYPER-DRIVE'; stateColor = '#ffd700'; }
+      else if (isAccelerating) { stateLabel = 'CURRENT SURGE'; stateColor = '#f59e0b'; }
+      else if (isBraking) { stateLabel = 'REGEN BRAKING'; stateColor = '#38bdf8'; }
       else if (speed > 25) { stateLabel = 'PURSUIT MODE'; stateColor = '#ff3344'; }
       else if (speed > 0) { stateLabel = 'CRUISE VECTOR'; stateColor = '#eab308'; }
 
-      ctx.font = `900 ${Math.round(13 * this.dpr)}px "Courier New", monospace`;
+      ctx.font = `900 ${Math.round(9.5 * this.dpr)}px "Courier New", monospace`;
       ctx.fillStyle = stateColor;
       ctx.shadowColor = stateColor;
-      ctx.shadowBlur = 6 * this.dpr;
+      ctx.shadowBlur = 5 * this.dpr;
       ctx.textAlign = 'center';
-      ctx.fillText(stateLabel, cx, boxY + boxH - 12 * this.dpr);
+      ctx.fillText(stateLabel, hudCenterX, boxY + boxH - 16 * this.dpr);
       ctx.shadowBlur = 0;
+
+      // Real-Time Sensor Telemetry HUD Footer (Gyro Tilt & Accel Coupling)
+      ctx.font = `700 ${Math.round(7.5 * this.dpr)}px "Courier New", monospace`;
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
+      ctx.textAlign = 'center';
+      const tiltXDeg = Math.round(totalTiltX);
+      const tiltYDeg = Math.round(totalTiltY);
+      ctx.fillText(`IMU TILT: X:${tiltXDeg > 0 ? '+' : ''}${tiltXDeg}° Y:${tiltYDeg > 0 ? '+' : ''}${tiltYDeg}° // ${speed} MPH`, hudCenterX, boxY + boxH - 5 * this.dpr);
 
       ctx.restore();
 
@@ -1712,26 +2383,44 @@
         }
       }
 
-      // Add Wildlife Animals
+      // Add Wildlife Animals (Staggered herd running away towards the vanishing horizon)
       if (this.stampedeAnimals) {
-        const herdThrust = isStopped ? 0 : (0.003 + (speed / 80) * 0.016);
+        const herdThrust = isStopped ? 0.0018 : (0.0036 + (speed / 80) * 0.020);
         for (let animal of this.stampedeAnimals) {
-          if (isStopped) {
-            animal.grazePhase += animal.grazeSpeed;
-            animal.x = animal.grazeBaseX + Math.sin(animal.grazePhase * 0.5) * 0.04;
-          } else {
-            animal.z += herdThrust * animal.speedOffset;
-            if (animal.z > 1.06) {
-              animal.z = 0.08;
-              animal.x = (Math.random() - 0.5) * 1.55;
-              animal.grazeBaseX = animal.x;
+          if (!animal.active) {
+            animal.spawnTimer--;
+            if (animal.spawnTimer <= 0) {
+              this._respawnAnimal(animal);
             }
-            animal.gallopPhase += gallopRate * animal.speedOffset;
+            continue;
           }
+
+          // Advance towards the vanishing horizon (Z decreases)
+          animal.z -= herdThrust * animal.speedOffset;
+          animal.gallopPhase += gallopRate * animal.speedOffset;
+
+          // Natural prairie wandering along drift vector
+          animal.x += (animal.driftX || 0);
+          if (animal.x > 0.82) {
+            animal.driftX = -Math.abs(animal.driftX || 0.002);
+            animal.facing = 1;
+          } else if (animal.x < -0.82) {
+            animal.driftX = Math.abs(animal.driftX || 0.002);
+            animal.facing = -1;
+          }
+
           if (animal.species === 'snake') {
-            animal.slitherPhase += isStopped ? 0.04 : (0.12 + Math.min(0.25, speed * 0.005));
+            animal.slitherPhase += isStopped ? 0.08 : (0.15 + Math.min(0.28, speed * 0.006));
           }
-          renderQueue.push({ type: 'animal', z: Math.max(0.08, Math.min(1.0, animal.z)), data: animal });
+
+          // Vanishing point over the horizon mesa rim
+          if (animal.z <= 0.07) {
+            animal.active = false;
+            animal.spawnTimer = Math.floor(Math.random() * 110 + 40); // 0.7s to 2.5s staggered cooldown
+            continue;
+          }
+
+          renderQueue.push({ type: 'animal', z: Math.max(0.07, Math.min(1.04, animal.z)), data: animal });
         }
       }
 
@@ -1764,28 +2453,27 @@
           const animal = item.data;
           const trackWidth = (w * 0.12) + pz * (w * 0.82);
           const ax = cx + (animal.x * trackWidth * 0.5);
-          const scale = (0.22 + Math.pow(pz, 1.5) * 1.05) * animal.size * this.dpr;
+          // Enlarged base scale for enhanced presence & crisp anatomical silhouette
+          const scale = (0.30 + Math.pow(pz, 1.35) * 1.42) * animal.size * this.dpr;
 
           let bounce = 0;
           if (animal.species === 'snake') {
             bounce = 0;
-          } else if (isStopped) {
-            bounce = Math.sin(animal.grazePhase * 2) * 1.2 * scale;
           } else {
-            bounce = Math.abs(Math.sin(animal.gallopPhase)) * 7 * scale;
+            bounce = Math.abs(Math.sin(animal.gallopPhase)) * 8 * scale;
           }
 
-          // Trailing dust particles while galloping
-          if (!isStopped && pz > 0.3 && Math.random() < 0.35) {
+          // Trailing dust particles kicked backward as animal surges towards horizon
+          if (pz > 0.25 && Math.random() < 0.35) {
             this.stampedeDust.push({
-              x: ax + (Math.random() - 0.5) * 16 * scale,
-              y: iy - bounce + 3 * scale,
+              x: ax + (Math.random() - 0.5) * 18 * scale,
+              y: iy - bounce + 4 * scale,
               z: pz,
-              size: (Math.random() * 10 + 5) * scale,
-              alpha: 0.38 * pz,
-              vx: (Math.random() - 0.5) * 1.4,
-              vy: -Math.random() * 1.0 - 0.3,
-              life: 50
+              size: (Math.random() * 9 + 5) * scale,
+              alpha: 0.40 * pz,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: Math.random() * 0.9 + 0.2, // Puffs backward/downward as hooves push forward
+              life: 45
             });
           }
 
@@ -1981,470 +2669,577 @@
       ctx.restore();
     }
 
+    _respawnAnimal(animal) {
+      const allSpecies = ['bison', 'mustang', 'pronghorn', 'elk', 'ram', 'giraffe', 'snake'];
+      animal.species = allSpecies[Math.floor(Math.random() * allSpecies.length)];
+      animal.active = true;
+      animal.z = 1.04; // Enters smoothly from the foreground
+      animal.x = (Math.random() - 0.5) * 1.45;
+      const drift = (Math.random() - 0.5) * 0.0028;
+      animal.driftX = drift;
+      animal.facing = drift >= 0 ? -1 : 1; // Aligned with stride drift direction
+      animal.speedOffset = Math.random() * 0.28 + 0.86;
+      animal.gallopPhase = Math.random() * Math.PI * 2;
+      animal.slitherPhase = Math.random() * Math.PI * 2;
+      animal.size = animal.species === 'giraffe' ? (Math.random() * 0.2 + 1.25) : (animal.species === 'snake' ? (Math.random() * 0.2 + 1.1) : (Math.random() * 0.25 + 1.15));
+      animal.coatVariant = Math.floor(Math.random() * 3);
+    }
+
     _drawWildlifeAnimal(ctx, x, y, scale, depth, animal, isStopped, speed) {
+      ctx.save();
+      ctx.translate(x, y);
+      if (animal.facing) {
+        ctx.scale(animal.facing, 1);
+      }
       switch (animal.species) {
         case 'giraffe':
-          this._drawGiraffe(ctx, x, y, scale, depth, animal, isStopped);
+          this._drawGiraffe(ctx, 0, 0, scale, depth, animal, isStopped);
           break;
         case 'snake':
-          this._drawSnake(ctx, x, y, scale, depth, animal, isStopped);
+          this._drawSnake(ctx, 0, 0, scale, depth, animal, isStopped);
           break;
         case 'mustang':
-          this._drawMustang(ctx, x, y, scale, depth, animal, isStopped);
+          this._drawMustang(ctx, 0, 0, scale, depth, animal, isStopped);
           break;
         case 'pronghorn':
-          this._drawPronghorn(ctx, x, y, scale, depth, animal, isStopped);
+          this._drawPronghorn(ctx, 0, 0, scale, depth, animal, isStopped);
           break;
         case 'elk':
-          this._drawElk(ctx, x, y, scale, depth, animal, isStopped);
+          this._drawElk(ctx, 0, 0, scale, depth, animal, isStopped);
           break;
         case 'ram':
-          this._drawBighornRam(ctx, x, y, scale, depth, animal, isStopped);
+          this._drawBighornRam(ctx, 0, 0, scale, depth, animal, isStopped);
           break;
         case 'bison':
         default:
-          this._drawBison(ctx, x, y, scale, depth, animal, isStopped, speed);
+          this._drawBison(ctx, 0, 0, scale, depth, animal, isStopped, speed);
           break;
       }
+      ctx.restore();
     }
 
-    /* 1. AMERICAN BISON (BUFFALO) */
+    /* 1. AMERICAN BISON (BUFFALO) - Heavy shaggy hump, beard, curved horns, cloven hooves */
     _drawBison(ctx, x, y, scale, depth, b, isStopped, speed) {
       ctx.save();
-      ctx.translate(x, y);
+      if (x || y) ctx.translate(x, y);
 
       const alpha = Math.min(1.0, 0.42 + depth * 0.58);
-      ctx.fillStyle = `rgba(26, 9, 3, ${alpha})`;
-      ctx.strokeStyle = `rgba(245, 130, 30, ${0.25 * depth})`;
       ctx.lineWidth = 1.0 * this.dpr;
 
-      const s = scale * 18;
-      const legPhase = isStopped ? 0 : b.gallopPhase;
-      const grazeBob = isStopped ? Math.sin(b.grazePhase) : 0;
+      const s = scale * 24; // Enlarged scale
+      const legPhase = b.gallopPhase;
 
-      // Leg swings
-      const fLeg1 = isStopped ? 0 : Math.sin(legPhase) * 12;
-      const fLeg2 = isStopped ? 0 : Math.sin(legPhase + Math.PI * 0.85) * 12;
-      const bLeg1 = isStopped ? 0 : Math.cos(legPhase) * 14;
-      const bLeg2 = isStopped ? 0 : Math.cos(legPhase + Math.PI * 0.85) * 14;
+      // Leg stride swing physics
+      const fLeg1 = Math.sin(legPhase) * 14;
+      const fLeg2 = Math.sin(legPhase + Math.PI * 0.85) * 14;
+      const bLeg1 = Math.cos(legPhase) * 16;
+      const bLeg2 = Math.cos(legPhase + Math.PI * 0.85) * 16;
+
+      // Body & Massive Muscular Hump
+      ctx.fillStyle = `rgba(24, 8, 2, ${alpha})`;
+      ctx.strokeStyle = `rgba(245, 130, 30, ${0.28 * depth})`;
 
       ctx.beginPath();
-      // Massive Shoulder Hump & Spine
-      ctx.moveTo(-s * 0.7, -s * 0.1);
-      ctx.quadraticCurveTo(-s * 0.4, -s * 0.85, 0, -s * 0.75); // Hump
-      ctx.quadraticCurveTo(s * 0.5, -s * 0.45, s * 0.85, -s * 0.1); // Back slope
-      ctx.lineTo(s * 0.85, s * 0.3); // Rump
+      ctx.moveTo(-s * 0.72, -s * 0.12);
+      ctx.quadraticCurveTo(-s * 0.42, -s * 0.92, 0, -s * 0.82); // Massive shoulder hump
+      ctx.quadraticCurveTo(s * 0.52, -s * 0.50, s * 0.88, -s * 0.12); // Sloping back to rump
+      ctx.lineTo(s * 0.88, s * 0.32); // Rump
 
-      // Back legs
-      ctx.lineTo(s * 0.65 + bLeg1 * 0.3, s * 0.85);
-      ctx.lineTo(s * 0.45, s * 0.3);
-      ctx.lineTo(s * 0.35 + bLeg2 * 0.3, s * 0.85);
-      ctx.lineTo(s * 0.15, s * 0.3);
+      // Back legs with hock angles & hooves
+      ctx.lineTo(s * 0.68 + bLeg1 * 0.32, s * 0.92);
+      ctx.lineTo(s * 0.46, s * 0.32);
+      ctx.lineTo(s * 0.36 + bLeg2 * 0.32, s * 0.92);
+      ctx.lineTo(s * 0.16, s * 0.32);
 
       // Belly
-      ctx.lineTo(-s * 0.25, s * 0.35);
+      ctx.lineTo(-s * 0.26, s * 0.38);
 
-      // Front legs
-      ctx.lineTo(-s * 0.45 + fLeg1 * 0.3, s * 0.9);
-      ctx.lineTo(-s * 0.55, s * 0.3);
-      ctx.lineTo(-s * 0.7 + fLeg2 * 0.3, s * 0.85);
+      // Front legs & heavy shaggy chest
+      ctx.lineTo(-s * 0.46 + fLeg1 * 0.32, s * 0.96);
+      ctx.lineTo(-s * 0.58, s * 0.32);
+      ctx.lineTo(-s * 0.72 + fLeg2 * 0.32, s * 0.92);
 
-      // Head: In grazing mode head reaches down towards ground (grazeBob)
-      const headY = isStopped ? (s * 0.25 + grazeBob * s * 0.3) : s * 0.25;
-      const snoutY = isStopped ? (s * 0.45 + grazeBob * s * 0.3) : -s * 0.1;
-      const headTopY = isStopped ? (s * 0.05 + grazeBob * s * 0.3) : -s * 0.45;
+      // Shaggy bearded head
+      const headY = s * 0.20;
+      const snoutY = -s * 0.12;
+      const headTopY = -s * 0.50;
 
-      ctx.lineTo(-s * 0.85, headY);
-      ctx.lineTo(-s * 1.05, snoutY);
-      ctx.lineTo(-s * 0.95, headTopY);
+      ctx.lineTo(-s * 0.88, headY);
+      ctx.lineTo(-s * 1.08, snoutY); // Muzzle
+      ctx.lineTo(-s * 0.98, headTopY); // Forehead
       ctx.closePath();
       ctx.fill();
-      if (depth > 0.35) ctx.stroke();
+      if (depth > 0.30) ctx.stroke();
 
-      // Curved Horns
+      // Shaggy Wool Beard Tuft
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(255, 215, 140, ${Math.min(1.0, depth * 1.2)})`;
-      ctx.lineWidth = Math.max(1.2 * this.dpr, 2.2 * scale);
-      ctx.moveTo(-s * 0.95, headTopY);
-      ctx.quadraticCurveTo(-s * 1.15, headTopY - s * 0.3, -s * 0.95, headTopY - s * 0.35);
+      ctx.fillStyle = `rgba(18, 5, 2, ${alpha})`;
+      ctx.moveTo(-s * 0.88, headY);
+      ctx.lineTo(-s * 1.08, snoutY);
+      ctx.lineTo(-s * 1.04, headY + s * 0.22 + Math.sin(legPhase) * s * 0.08); // Swaying beard
+      ctx.closePath();
+      ctx.fill();
+
+      // Shaggy Front Cape Layer (Two-tone golden russet coat depth)
+      if (depth > 0.30) {
+        ctx.fillStyle = `rgba(55, 22, 8, ${0.45 * depth})`;
+        ctx.beginPath();
+        ctx.arc(-s * 0.3, -s * 0.45, s * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Curved Horns with Ivory Highlight & Dark Tip
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(254, 240, 138, ${Math.min(1.0, depth * 1.3)})`;
+      ctx.lineWidth = Math.max(1.4 * this.dpr, 2.6 * scale);
+      ctx.moveTo(-s * 0.96, headTopY);
+      ctx.quadraticCurveTo(-s * 1.20, headTopY - s * 0.32, -s * 0.98, headTopY - s * 0.38);
       ctx.stroke();
+
+      // Swishing Tail with Tuft
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(20, 6, 2, ${alpha})`;
+      ctx.lineWidth = Math.max(1.2 * this.dpr, 2.2 * scale);
+      ctx.moveTo(s * 0.88, -s * 0.08);
+      const tailSwing = Math.sin(legPhase) * 6 * scale;
+      ctx.quadraticCurveTo(s * 1.10, s * 0.20 + tailSwing, s * 1.04, s * 0.65);
+      ctx.stroke();
+
+      // Amber Eye Glint
+      if (depth > 0.35) {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(-s * 0.98, -s * 0.24, Math.max(1.0 * this.dpr, 1.6 * scale), 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     }
 
-    /* 2. WILD MUSTANG (HORSE) */
+    /* 2. WILD MUSTANG (HORSE) - Athletic build, streaming windblown mane & tail, markings */
     _drawMustang(ctx, x, y, scale, depth, h, isStopped) {
       ctx.save();
-      ctx.translate(x, y);
+      if (x || y) ctx.translate(x, y);
 
       const alpha = Math.min(1.0, 0.42 + depth * 0.58);
-      // Coat variants: Bay brown, Chestnut, Obsidian
-      const coat = h.coatVariant === 0 ? `rgba(45, 16, 6, ${alpha})` : h.coatVariant === 1 ? `rgba(32, 10, 4, ${alpha})` : `rgba(18, 6, 2, ${alpha})`;
+      // Coat variants: Deep Bay, Chestnut, or Obsidian Stallion
+      const coat = h.coatVariant === 0 ? `rgba(50, 18, 6, ${alpha})` : h.coatVariant === 1 ? `rgba(36, 12, 4, ${alpha})` : `rgba(20, 7, 2, ${alpha})`;
       ctx.fillStyle = coat;
-      ctx.strokeStyle = `rgba(245, 150, 40, ${0.22 * depth})`;
+      ctx.strokeStyle = `rgba(245, 150, 40, ${0.25 * depth})`;
       ctx.lineWidth = 1.0 * this.dpr;
 
-      const s = scale * 17;
-      const legPhase = isStopped ? 0 : h.gallopPhase;
-      const grazeBob = isStopped ? Math.sin(h.grazePhase) : 0;
+      const s = scale * 23; // Enlarged scale
+      const legPhase = h.gallopPhase;
 
-      const fLeg1 = isStopped ? 0 : Math.sin(legPhase) * 14;
-      const fLeg2 = isStopped ? 0 : Math.sin(legPhase + Math.PI * 0.85) * 14;
-      const bLeg1 = isStopped ? 0 : Math.cos(legPhase) * 15;
-      const bLeg2 = isStopped ? 0 : Math.cos(legPhase + Math.PI * 0.85) * 15;
+      const fLeg1 = Math.sin(legPhase) * 16;
+      const fLeg2 = Math.sin(legPhase + Math.PI * 0.85) * 16;
+      const bLeg1 = Math.cos(legPhase) * 17;
+      const bLeg2 = Math.cos(legPhase + Math.PI * 0.85) * 17;
 
       ctx.beginPath();
-      // Athletic Horse Back & Barrel
-      ctx.moveTo(-s * 0.5, -s * 0.35); // Base of neck
-      ctx.quadraticCurveTo(0, -s * 0.42, s * 0.5, -s * 0.35); // Back
-      ctx.quadraticCurveTo(s * 0.8, -s * 0.3, s * 0.95, 0); // Muscular rump
-      ctx.lineTo(s * 0.9, s * 0.25);
+      // Athletic Arched Neck, Back & Powerful Haunches
+      ctx.moveTo(-s * 0.52, -s * 0.38);
+      ctx.quadraticCurveTo(0, -s * 0.46, s * 0.52, -s * 0.38); // Back
+      ctx.quadraticCurveTo(s * 0.84, -s * 0.32, s * 0.98, 0); // Muscular quarters
+      ctx.lineTo(s * 0.92, s * 0.26);
 
-      // Back legs (Slender athletic)
-      ctx.lineTo(s * 0.75 + bLeg1 * 0.3, s * 0.88);
-      ctx.lineTo(s * 0.55, s * 0.25);
-      ctx.lineTo(s * 0.45 + bLeg2 * 0.3, s * 0.88);
-      ctx.lineTo(s * 0.25, s * 0.2);
+      // Back legs (Slender, athletic with defined hock joints)
+      ctx.lineTo(s * 0.78 + bLeg1 * 0.32, s * 0.94);
+      ctx.lineTo(s * 0.58, s * 0.26);
+      ctx.lineTo(s * 0.46 + bLeg2 * 0.32, s * 0.94);
+      ctx.lineTo(s * 0.26, s * 0.22);
 
-      // Lean belly
-      ctx.lineTo(-s * 0.2, s * 0.2);
+      // Lean athletic belly
+      ctx.lineTo(-s * 0.22, s * 0.22);
 
       // Front legs
-      ctx.lineTo(-s * 0.35 + fLeg1 * 0.3, s * 0.9);
-      ctx.lineTo(-s * 0.45, s * 0.2);
-      ctx.lineTo(-s * 0.6 + fLeg2 * 0.3, s * 0.9);
-      ctx.lineTo(-s * 0.65, s * 0.1);
+      ctx.lineTo(-s * 0.38 + fLeg1 * 0.32, s * 0.96);
+      ctx.lineTo(-s * 0.48, s * 0.22);
+      ctx.lineTo(-s * 0.64 + fLeg2 * 0.32, s * 0.96);
+      ctx.lineTo(-s * 0.68, s * 0.12);
 
-      // Graceful Neck and Head
-      if (isStopped) {
-        // Grazing: Neck arches down to grass
-        const neckDownY = s * 0.3 + grazeBob * s * 0.35;
-        ctx.lineTo(-s * 0.95, neckDownY);
-        ctx.lineTo(-s * 1.15, neckDownY + s * 0.15); // Muzzle on grass
-        ctx.lineTo(-s * 0.95, neckDownY - s * 0.15); // Forehead
-      } else {
-        // Galloping: Neck held high with aerodynamic thrust
-        ctx.lineTo(-s * 0.95, -s * 0.6); // Throat
-        ctx.lineTo(-s * 1.2, -s * 0.75); // Snout
-        ctx.lineTo(-s * 1.05, -s * 0.95); // Crown & ears
-      }
+      // Proud Arched Neck and Aerodynamic Head
+      ctx.lineTo(-s * 0.98, -s * 0.65); // Throat
+      ctx.lineTo(-s * 1.25, -s * 0.80); // Muzzle
+      ctx.lineTo(-s * 1.08, -s * 1.02); // Forehead & ears
       ctx.closePath();
       ctx.fill();
-      if (depth > 0.35) ctx.stroke();
+      if (depth > 0.30) ctx.stroke();
 
-      // Flowing Windblown Mane & Tail
+      // Flowing Windblown Mane Streaming in the Breeze
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(20, 5, 2, ${alpha})`;
-      ctx.lineWidth = Math.max(1.5 * this.dpr, 2.5 * scale);
-      // Tail
-      ctx.moveTo(s * 0.95, 0);
-      const tailWave = isStopped ? Math.sin(h.grazePhase * 3) * 3 : Math.sin(h.gallopPhase) * 6;
-      ctx.quadraticCurveTo(s * 1.2, s * 0.2 + tailWave, s * 1.15, s * 0.7);
+      ctx.strokeStyle = `rgba(16, 4, 2, ${alpha})`;
+      ctx.lineWidth = Math.max(1.6 * this.dpr, 3.0 * scale);
+      for (let m = 0; m < 4; m++) {
+        const my = -s * 0.45 - m * s * 0.14;
+        const mx = -s * 0.65 - m * s * 0.12;
+        ctx.moveTo(mx, my);
+        ctx.quadraticCurveTo(mx + s * 0.22, my - s * 0.12 + Math.sin(legPhase + m) * 4 * scale, mx + s * 0.35, my + s * 0.05);
+      }
       ctx.stroke();
+
+      // Flying Wild Tail Streaming High in the Wind
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(18, 4, 2, ${alpha})`;
+      ctx.lineWidth = Math.max(1.8 * this.dpr, 3.2 * scale);
+      ctx.moveTo(s * 0.98, -s * 0.02);
+      const tailFly = Math.sin(legPhase) * 8 * scale;
+      ctx.quadraticCurveTo(s * 1.30, s * 0.15 + tailFly, s * 1.25, s * 0.78);
+      ctx.stroke();
+
+      // White Star / Blaze Marking on Forehead
+      if (depth > 0.30) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.85 * alpha})`;
+        ctx.beginPath();
+        ctx.arc(-s * 1.12, -s * 0.88, Math.max(1.2 * this.dpr, 2.0 * scale), 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     }
 
-    /* 3. PRONGHORN ANTELOPE */
+    /* 3. PRONGHORN ANTELOPE - Swift gazelle silhouette, dual white throat bars, hooked black horns */
     _drawPronghorn(ctx, x, y, scale, depth, a, isStopped) {
       ctx.save();
-      ctx.translate(x, y);
+      if (x || y) ctx.translate(x, y);
 
       const alpha = Math.min(1.0, 0.42 + depth * 0.58);
-      ctx.fillStyle = `rgba(50, 20, 8, ${alpha})`;
-      ctx.strokeStyle = `rgba(245, 160, 50, ${0.25 * depth})`;
+      ctx.fillStyle = `rgba(56, 22, 8, ${alpha})`;
+      ctx.strokeStyle = `rgba(245, 160, 50, ${0.28 * depth})`;
       ctx.lineWidth = 1.0 * this.dpr;
 
-      const s = scale * 15;
-      const legPhase = isStopped ? 0 : a.gallopPhase;
-      const grazeBob = isStopped ? Math.sin(a.grazePhase) : 0;
+      const s = scale * 20; // Enlarged scale
+      const legPhase = a.gallopPhase;
 
-      // High bounding leaps
-      const fLeg1 = isStopped ? 0 : Math.sin(legPhase) * 16;
-      const fLeg2 = isStopped ? 0 : Math.sin(legPhase + Math.PI * 0.8) * 16;
-      const bLeg1 = isStopped ? 0 : Math.cos(legPhase) * 16;
-      const bLeg2 = isStopped ? 0 : Math.cos(legPhase + Math.PI * 0.8) * 16;
+      // Swift, high-bounding leaps
+      const fLeg1 = Math.sin(legPhase) * 18;
+      const fLeg2 = Math.sin(legPhase + Math.PI * 0.8) * 18;
+      const bLeg1 = Math.cos(legPhase) * 18;
+      const bLeg2 = Math.cos(legPhase + Math.PI * 0.8) * 18;
 
       ctx.beginPath();
-      // Compact, Slender Agile Body
-      ctx.moveTo(-s * 0.4, -s * 0.3);
-      ctx.quadraticCurveTo(0, -s * 0.35, s * 0.5, -s * 0.28);
-      ctx.lineTo(s * 0.75, 0);
+      // Compact, Slender Aerodynamic Body
+      ctx.moveTo(-s * 0.42, -s * 0.32);
+      ctx.quadraticCurveTo(0, -s * 0.38, s * 0.52, -s * 0.30);
+      ctx.lineTo(s * 0.78, 0);
 
-      // Back legs (Ultra-slender swift gazelle legs)
-      ctx.lineTo(s * 0.6 + bLeg1 * 0.35, s * 0.92);
-      ctx.lineTo(s * 0.45, s * 0.2);
-      ctx.lineTo(s * 0.35 + bLeg2 * 0.35, s * 0.92);
-      ctx.lineTo(s * 0.2, s * 0.15);
+      // Swift slender gazelle hind legs
+      ctx.lineTo(s * 0.64 + bLeg1 * 0.36, s * 0.96);
+      ctx.lineTo(s * 0.48, s * 0.22);
+      ctx.lineTo(s * 0.38 + bLeg2 * 0.36, s * 0.96);
+      ctx.lineTo(s * 0.22, s * 0.16);
 
       // Belly
-      ctx.lineTo(-s * 0.2, s * 0.15);
+      ctx.lineTo(-s * 0.22, s * 0.16);
 
       // Front legs
-      ctx.lineTo(-s * 0.3 + fLeg1 * 0.35, s * 0.92);
-      ctx.lineTo(-s * 0.4, s * 0.15);
-      ctx.lineTo(-s * 0.55 + fLeg2 * 0.35, s * 0.92);
+      ctx.lineTo(-s * 0.32 + fLeg1 * 0.36, s * 0.96);
+      ctx.lineTo(-s * 0.42, s * 0.16);
+      ctx.lineTo(-s * 0.58 + fLeg2 * 0.36, s * 0.96);
 
-      // Slender Neck & Head
-      if (isStopped) {
-        const neckDownY = s * 0.25 + grazeBob * s * 0.3;
-        ctx.lineTo(-s * 0.8, neckDownY);
-        ctx.lineTo(-s * 1.0, neckDownY + s * 0.1);
-        ctx.lineTo(-s * 0.85, neckDownY - s * 0.15);
-      } else {
-        ctx.lineTo(-s * 0.8, -s * 0.65);
-        ctx.lineTo(-s * 1.05, -s * 0.7);
-        ctx.lineTo(-s * 0.9, -s * 0.95);
-      }
+      // Slender neck and sharp alert head
+      ctx.lineTo(-s * 0.84, -s * 0.70);
+      ctx.lineTo(-s * 1.10, -s * 0.75); // Snout
+      ctx.lineTo(-s * 0.94, -s * 1.02); // Crown
       ctx.closePath();
       ctx.fill();
+      if (depth > 0.30) ctx.stroke();
 
-      // White flank rump patch
-      ctx.fillStyle = `rgba(240, 220, 190, ${alpha * 0.85})`;
+      // Bold White Throat Collar Bars (Iconic Pronghorn Markings)
+      ctx.fillStyle = `rgba(254, 243, 199, ${alpha * 0.92})`;
       ctx.beginPath();
-      ctx.arc(s * 0.65, -s * 0.05, s * 0.18, 0, Math.PI * 2);
+      ctx.ellipse(-s * 0.68, -s * 0.35, s * 0.12, s * 0.05, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(-s * 0.76, -s * 0.52, s * 0.10, s * 0.04, -0.4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pronghorn Hooked Horns
-      const hornBaseY = isStopped ? (s * 0.1 + grazeBob * s * 0.3) : -s * 0.95;
+      // Radiant White Flank Rump Patch
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(20, 7, 2, ${alpha})`;
-      ctx.lineWidth = Math.max(1.2 * this.dpr, 1.8 * scale);
-      ctx.moveTo(-s * 0.85, hornBaseY);
-      ctx.lineTo(-s * 0.82, hornBaseY - s * 0.35);
-      ctx.lineTo(-s * 0.9, hornBaseY - s * 0.42); // Forward prong
+      ctx.arc(s * 0.68, -s * 0.04, s * 0.20, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Black Hooked Horns with Forward Prongs
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(18, 6, 2, ${alpha})`;
+      ctx.lineWidth = Math.max(1.4 * this.dpr, 2.2 * scale);
+      ctx.moveTo(-s * 0.92, -s * 1.00);
+      ctx.lineTo(-s * 0.88, -s * 1.40);
+      ctx.lineTo(-s * 1.00, -s * 1.48); // Forward hook
+      // Forward prong spur
+      ctx.moveTo(-s * 0.90, -s * 1.20);
+      ctx.lineTo(-s * 1.02, -s * 1.26);
       ctx.stroke();
 
       ctx.restore();
     }
 
-    /* 4. MAJESTIC ELK (STAG) */
+    /* 4. MAJESTIC ELK (STAG) - Branching 6-point antler crown, dark shaggy neck ruff, buff rump */
     _drawElk(ctx, x, y, scale, depth, elk, isStopped) {
       ctx.save();
-      ctx.translate(x, y);
+      if (x || y) ctx.translate(x, y);
 
       const alpha = Math.min(1.0, 0.42 + depth * 0.58);
-      ctx.fillStyle = `rgba(38, 14, 5, ${alpha})`;
-      ctx.strokeStyle = `rgba(245, 130, 30, ${0.25 * depth})`;
+      ctx.fillStyle = `rgba(42, 16, 5, ${alpha})`;
+      ctx.strokeStyle = `rgba(245, 130, 30, ${0.28 * depth})`;
       ctx.lineWidth = 1.0 * this.dpr;
 
-      const s = scale * 18;
-      const legPhase = isStopped ? 0 : elk.gallopPhase;
-      const grazeBob = isStopped ? Math.sin(elk.grazePhase) : 0;
+      const s = scale * 24; // Enlarged scale
+      const legPhase = elk.gallopPhase;
 
-      const fLeg1 = isStopped ? 0 : Math.sin(legPhase) * 13;
-      const fLeg2 = isStopped ? 0 : Math.sin(legPhase + Math.PI * 0.85) * 13;
-      const bLeg1 = isStopped ? 0 : Math.cos(legPhase) * 14;
-      const bLeg2 = isStopped ? 0 : Math.cos(legPhase + Math.PI * 0.85) * 14;
+      const fLeg1 = Math.sin(legPhase) * 15;
+      const fLeg2 = Math.sin(legPhase + Math.PI * 0.85) * 15;
+      const bLeg1 = Math.cos(legPhase) * 16;
+      const bLeg2 = Math.cos(legPhase + Math.PI * 0.85) * 16;
 
       ctx.beginPath();
-      // Proud Tall Body
-      ctx.moveTo(-s * 0.5, -s * 0.4);
-      ctx.quadraticCurveTo(0, -s * 0.48, s * 0.55, -s * 0.38);
-      ctx.lineTo(s * 0.85, -s * 0.05);
+      // Proud Tall Cervid Body
+      ctx.moveTo(-s * 0.52, -s * 0.42);
+      ctx.quadraticCurveTo(0, -s * 0.50, s * 0.58, -s * 0.40);
+      ctx.lineTo(s * 0.88, -s * 0.05);
 
       // Back legs
-      ctx.lineTo(s * 0.7 + bLeg1 * 0.3, s * 0.9);
-      ctx.lineTo(s * 0.5, s * 0.25);
-      ctx.lineTo(s * 0.4 + bLeg2 * 0.3, s * 0.9);
-      ctx.lineTo(s * 0.2, s * 0.2);
+      ctx.lineTo(s * 0.74 + bLeg1 * 0.32, s * 0.95);
+      ctx.lineTo(s * 0.52, s * 0.28);
+      ctx.lineTo(s * 0.42 + bLeg2 * 0.32, s * 0.95);
+      ctx.lineTo(s * 0.22, s * 0.22);
 
       // Belly
-      ctx.lineTo(-s * 0.25, s * 0.25);
+      ctx.lineTo(-s * 0.26, s * 0.28);
 
       // Front legs
-      ctx.lineTo(-s * 0.4 + fLeg1 * 0.3, s * 0.92);
-      ctx.lineTo(-s * 0.5, s * 0.2);
-      ctx.lineTo(-s * 0.65 + fLeg2 * 0.3, s * 0.92);
+      ctx.lineTo(-s * 0.42 + fLeg1 * 0.32, s * 0.96);
+      ctx.lineTo(-s * 0.52, s * 0.22);
+      ctx.lineTo(-s * 0.68 + fLeg2 * 0.32, s * 0.96);
 
-      // Heavy maned chest & neck
-      const crownY = isStopped ? (s * 0.15 + grazeBob * s * 0.35) : -s * 0.95;
-      const snoutY = isStopped ? (s * 0.45 + grazeBob * s * 0.35) : -s * 0.75;
-      ctx.lineTo(-s * 0.75, isStopped ? s * 0.3 : -s * 0.4);
-      ctx.lineTo(-s * 1.1, snoutY);
-      ctx.lineTo(-s * 0.95, crownY);
+      // Deep Shaggy Maned Chest and Arched Neck
+      ctx.lineTo(-s * 0.80, -s * 0.42);
+      ctx.lineTo(-s * 1.15, -s * 0.80); // Muzzle
+      ctx.lineTo(-s * 0.98, -s * 1.02); // Crown
       ctx.closePath();
       ctx.fill();
-      if (depth > 0.35) ctx.stroke();
+      if (depth > 0.30) ctx.stroke();
 
-      // Branching Grand Antler Crown
+      // Shaggy Dark Neck Ruff (Contrasting cape)
+      ctx.fillStyle = `rgba(20, 7, 2, ${alpha * 0.95})`;
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(255, 215, 150, ${Math.min(1.0, depth * 1.3)})`;
-      ctx.lineWidth = Math.max(1.2 * this.dpr, 2.0 * scale);
-      // Main beam
-      ctx.moveTo(-s * 0.95, crownY);
-      ctx.quadraticCurveTo(-s * 0.7, crownY - s * 0.6, -s * 0.4, crownY - s * 0.85);
-      // Tines
-      ctx.moveTo(-s * 0.85, crownY - s * 0.25);
-      ctx.lineTo(-s * 1.05, crownY - s * 0.45); // Brow tine
-      ctx.moveTo(-s * 0.75, crownY - s * 0.45);
-      ctx.lineTo(-s * 0.85, crownY - s * 0.7); // Bez tine
-      ctx.moveTo(-s * 0.55, crownY - s * 0.68);
-      ctx.lineTo(-s * 0.6, crownY - s * 0.95); // Royal tine
+      ctx.moveTo(-s * 0.62, -s * 0.35);
+      ctx.lineTo(-s * 0.80, -s * 0.42);
+      ctx.lineTo(-s * 0.98, -s * 0.82);
+      ctx.lineTo(-s * 0.74, -s * 0.65);
+      ctx.closePath();
+      ctx.fill();
+
+      // Pale Golden-Buff Rump Patch
+      ctx.fillStyle = `rgba(253, 230, 138, ${alpha * 0.88})`;
+      ctx.beginPath();
+      ctx.arc(s * 0.74, -s * 0.12, s * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Grand Multi-Tine Branching Antler Rack
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(254, 240, 138, ${Math.min(1.0, depth * 1.35)})`;
+      ctx.lineWidth = Math.max(1.4 * this.dpr, 2.4 * scale);
+      // Main sweeping beam
+      ctx.moveTo(-s * 0.98, -s * 1.02);
+      ctx.quadraticCurveTo(-s * 0.72, -s * 1.70, -s * 0.38, -s * 1.95);
+      // Brow tine
+      ctx.moveTo(-s * 0.92, -s * 1.18);
+      ctx.lineTo(-s * 1.18, -s * 1.40);
+      // Bez tine
+      ctx.moveTo(-s * 0.80, -s * 1.42);
+      ctx.lineTo(-s * 0.95, -s * 1.72);
+      // Royal tine
+      ctx.moveTo(-s * 0.58, -s * 1.70);
+      ctx.lineTo(-s * 0.65, -s * 2.05);
       ctx.stroke();
 
       ctx.restore();
     }
 
-    /* 5. DESERT BIGHORN RAM */
+    /* 5. DESERT BIGHORN RAM - Massive ridged curled spiral horns, stocky muscular mountain build */
     _drawBighornRam(ctx, x, y, scale, depth, ram, isStopped) {
       ctx.save();
-      ctx.translate(x, y);
+      if (x || y) ctx.translate(x, y);
 
       const alpha = Math.min(1.0, 0.42 + depth * 0.58);
-      ctx.fillStyle = `rgba(32, 11, 4, ${alpha})`;
-      ctx.strokeStyle = `rgba(245, 140, 40, ${0.25 * depth})`;
+      ctx.fillStyle = `rgba(36, 14, 4, ${alpha})`;
+      ctx.strokeStyle = `rgba(245, 140, 40, ${0.28 * depth})`;
       ctx.lineWidth = 1.0 * this.dpr;
 
-      const s = scale * 15;
-      const legPhase = isStopped ? 0 : ram.gallopPhase;
-      const grazeBob = isStopped ? Math.sin(ram.grazePhase) : 0;
+      const s = scale * 20; // Enlarged scale
+      const legPhase = ram.gallopPhase;
 
-      const fLeg1 = isStopped ? 0 : Math.sin(legPhase) * 11;
-      const fLeg2 = isStopped ? 0 : Math.sin(legPhase + Math.PI * 0.85) * 11;
-      const bLeg1 = isStopped ? 0 : Math.cos(legPhase) * 12;
-      const bLeg2 = isStopped ? 0 : Math.cos(legPhase + Math.PI * 0.85) * 12;
+      const fLeg1 = Math.sin(legPhase) * 13;
+      const fLeg2 = Math.sin(legPhase + Math.PI * 0.85) * 13;
+      const bLeg1 = Math.cos(legPhase) * 14;
+      const bLeg2 = Math.cos(legPhase + Math.PI * 0.85) * 14;
 
       ctx.beginPath();
-      // Stout, Stocky Mountain Body
-      ctx.moveTo(-s * 0.5, -s * 0.35);
-      ctx.quadraticCurveTo(0, -s * 0.4, s * 0.5, -s * 0.3);
-      ctx.lineTo(s * 0.75, 0);
+      // Stocky, Powerful Mountain Body
+      ctx.moveTo(-s * 0.52, -s * 0.38);
+      ctx.quadraticCurveTo(0, -s * 0.44, s * 0.52, -s * 0.34);
+      ctx.lineTo(s * 0.78, 0);
 
       // Back legs
-      ctx.lineTo(s * 0.6 + bLeg1 * 0.3, s * 0.85);
-      ctx.lineTo(s * 0.45, s * 0.25);
-      ctx.lineTo(s * 0.35 + bLeg2 * 0.3, s * 0.85);
-      ctx.lineTo(s * 0.15, s * 0.2);
+      ctx.lineTo(s * 0.64 + bLeg1 * 0.32, s * 0.88);
+      ctx.lineTo(s * 0.48, s * 0.28);
+      ctx.lineTo(s * 0.38 + bLeg2 * 0.32, s * 0.88);
+      ctx.lineTo(s * 0.18, s * 0.22);
 
       // Belly
-      ctx.lineTo(-s * 0.2, s * 0.25);
+      ctx.lineTo(-s * 0.22, s * 0.28);
 
       // Front legs
-      ctx.lineTo(-s * 0.35 + fLeg1 * 0.3, s * 0.85);
-      ctx.lineTo(-s * 0.45, s * 0.2);
-      ctx.lineTo(-s * 0.6 + fLeg2 * 0.3, s * 0.85);
+      ctx.lineTo(-s * 0.38 + fLeg1 * 0.32, s * 0.88);
+      ctx.lineTo(-s * 0.48, s * 0.22);
+      ctx.lineTo(-s * 0.64 + fLeg2 * 0.32, s * 0.88);
 
-      // Head
-      const headY = isStopped ? (s * 0.2 + grazeBob * s * 0.3) : -s * 0.45;
-      const snoutY = isStopped ? (s * 0.4 + grazeBob * s * 0.3) : -s * 0.35;
-      ctx.lineTo(-s * 0.75, headY);
-      ctx.lineTo(-s * 0.95, snoutY);
-      ctx.lineTo(-s * 0.85, headY - s * 0.35);
+      // Muscular Neck & Head
+      const headY = -s * 0.48;
+      const snoutY = -s * 0.38;
+      ctx.lineTo(-s * 0.78, headY);
+      ctx.lineTo(-s * 1.02, snoutY);
+      ctx.lineTo(-s * 0.90, headY - s * 0.38);
       ctx.closePath();
       ctx.fill();
-      if (depth > 0.35) ctx.stroke();
+      if (depth > 0.30) ctx.stroke();
 
-      // Massive Curled Spiral Horns
-      const hornY = headY - s * 0.35;
+      // Massive Heavy Spiral Curled Horns (Sweeping backward and down around ears)
+      const hornY = headY - s * 0.38;
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(255, 205, 130, ${Math.min(1.0, depth * 1.3)})`;
-      ctx.lineWidth = Math.max(1.6 * this.dpr, 2.6 * scale);
-      ctx.arc(-s * 0.7, hornY + s * 0.15, s * 0.35, Math.PI * 1.1, Math.PI * 2.8);
+      ctx.strokeStyle = `rgba(253, 224, 71, ${Math.min(1.0, depth * 1.35)})`;
+      ctx.lineWidth = Math.max(2.0 * this.dpr, 3.4 * scale);
+      ctx.arc(-s * 0.74, hornY + s * 0.16, s * 0.40, Math.PI * 1.05, Math.PI * 2.85);
       ctx.stroke();
 
-      ctx.restore();
-    }
-
-    /* 6. TOWERING GIRAFFE */
-    _drawGiraffe(ctx, x, y, scale, depth, g, isStopped) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      const alpha = Math.min(1.0, 0.44 + depth * 0.56);
-      ctx.fillStyle = `rgba(38, 16, 5, ${alpha})`;
-      ctx.strokeStyle = `rgba(255, 180, 70, ${0.28 * depth})`;
-      ctx.lineWidth = 1.0 * this.dpr;
-
-      const s = scale * 19;
-      const legPhase = isStopped ? 0 : g.gallopPhase;
-      const grazeBob = isStopped ? Math.sin(g.grazePhase) : 0;
-
-      // Stately, rhythmic long-legged gallop
-      const fLeg1 = isStopped ? 0 : Math.sin(legPhase) * 16;
-      const fLeg2 = isStopped ? 0 : Math.sin(legPhase + Math.PI * 0.85) * 16;
-      const bLeg1 = isStopped ? 0 : Math.cos(legPhase) * 16;
-      const bLeg2 = isStopped ? 0 : Math.cos(legPhase + Math.PI * 0.85) * 16;
-
-      ctx.beginPath();
-      // Sloping Back & Tall Shoulders
-      ctx.moveTo(-s * 0.35, -s * 0.7); // High shoulders
-      ctx.quadraticCurveTo(0, -s * 0.55, s * 0.5, -s * 0.35); // Steeply sloping spine
-      ctx.lineTo(s * 0.65, -s * 0.05); // Rump
-
-      // Long Stilted Back Legs
-      ctx.lineTo(s * 0.55 + bLeg1 * 0.3, s * 1.15);
-      ctx.lineTo(s * 0.4, 0);
-      ctx.lineTo(s * 0.3 + bLeg2 * 0.3, s * 1.15);
-      ctx.lineTo(s * 0.15, -s * 0.05);
-
-      // Belly
-      ctx.lineTo(-s * 0.15, -s * 0.05);
-
-      // Long Stilted Front Legs
-      ctx.lineTo(-s * 0.25 + fLeg1 * 0.3, s * 1.25);
-      ctx.lineTo(-s * 0.35, -s * 0.1);
-      ctx.lineTo(-s * 0.48 + fLeg2 * 0.3, s * 1.25);
-
-      // Towering Long Neck
-      // When stopped / grazing: neck reaches down towards tree/ground or stays arched high
-      const neckAngle = isStopped ? (grazeBob * 0.35 + 0.3) : -0.15;
-      const headX = -s * 0.75 + Math.sin(neckAngle) * s * 1.4;
-      const headY = isStopped ? (-s * 0.85 + grazeBob * s * 0.9) : -s * 2.1;
-
-      ctx.lineTo(-s * 0.52, -s * 0.8);
-      ctx.lineTo(headX, headY);
-      ctx.lineTo(headX - s * 0.28, headY + s * 0.15); // Snout
-      ctx.lineTo(headX - s * 0.15, headY - s * 0.15); // Crown
-      ctx.closePath();
-      ctx.fill();
-      if (depth > 0.35) ctx.stroke();
-
-      // Giraffe Ossicones (Crown Horns)
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(255, 210, 110, ${Math.min(1.0, depth * 1.4)})`;
-      ctx.lineWidth = Math.max(1.2 * this.dpr, 2.0 * scale);
-      ctx.moveTo(headX - s * 0.08, headY - s * 0.12);
-      ctx.lineTo(headX - s * 0.08, headY - s * 0.32);
-      ctx.moveTo(headX - s * 0.16, headY - s * 0.1);
-      ctx.lineTo(headX - s * 0.16, headY - s * 0.3);
-      ctx.stroke();
-
-      // Distinctive Giraffe Coat Patch Dots along neck & flanks
+      // Horn Ridge Segment Textures
       if (depth > 0.35) {
-        ctx.fillStyle = `rgba(215, 130, 45, ${0.45 * depth})`;
-        for (let p = 0; p < 4; p++) {
-          const py = -s * 0.6 - p * s * 0.32;
-          const px = -s * 0.35 + (headX + s * 0.35) * (p / 4);
+        ctx.strokeStyle = `rgba(120, 53, 15, ${0.5 * depth})`;
+        ctx.lineWidth = 1.0 * this.dpr;
+        for (let r = 0; r < 5; r++) {
+          const rAng = Math.PI * 1.2 + r * 0.3;
+          const rx = -s * 0.74 + Math.cos(rAng) * s * 0.40;
+          const ry = hornY + s * 0.16 + Math.sin(rAng) * s * 0.40;
           ctx.beginPath();
-          ctx.arc(px, py, 2.4 * scale, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.moveTo(rx - 2 * scale, ry - 2 * scale);
+          ctx.lineTo(rx + 2 * scale, ry + 2 * scale);
+          ctx.stroke();
         }
       }
 
       ctx.restore();
     }
 
-    /* 7. SLITHERING DESERT SNAKE */
+    /* 6. TOWERING GIRAFFE - Long stilted legs, skyward neck, polygonal coat spots, ossicones */
+    _drawGiraffe(ctx, x, y, scale, depth, g, isStopped) {
+      ctx.save();
+      if (x || y) ctx.translate(x, y);
+
+      const alpha = Math.min(1.0, 0.44 + depth * 0.56);
+      ctx.fillStyle = `rgba(42, 18, 5, ${alpha})`;
+      ctx.strokeStyle = `rgba(255, 180, 70, ${0.30 * depth})`;
+      ctx.lineWidth = 1.0 * this.dpr;
+
+      const s = scale * 26; // Enlarged scale
+      const legPhase = g.gallopPhase;
+
+      // Stately, rhythmic long-legged gallop
+      const fLeg1 = Math.sin(legPhase) * 18;
+      const fLeg2 = Math.sin(legPhase + Math.PI * 0.85) * 18;
+      const bLeg1 = Math.cos(legPhase) * 18;
+      const bLeg2 = Math.cos(legPhase + Math.PI * 0.85) * 18;
+
+      ctx.beginPath();
+      // Sloping Spine & Tall Shoulders
+      ctx.moveTo(-s * 0.38, -s * 0.75); // High shoulders
+      ctx.quadraticCurveTo(0, -s * 0.60, s * 0.54, -s * 0.38); // Steeply sloping spine
+      ctx.lineTo(s * 0.70, -s * 0.06); // Rump
+
+      // Long Stilted Back Legs
+      ctx.lineTo(s * 0.60 + bLeg1 * 0.34, s * 1.22);
+      ctx.lineTo(s * 0.44, 0);
+      ctx.lineTo(s * 0.34 + bLeg2 * 0.34, s * 1.22);
+      ctx.lineTo(s * 0.16, -s * 0.06);
+
+      // Belly
+      ctx.lineTo(-s * 0.16, -s * 0.06);
+
+      // Long Stilted Front Legs
+      ctx.lineTo(-s * 0.28 + fLeg1 * 0.34, s * 1.32);
+      ctx.lineTo(-s * 0.38, -s * 0.12);
+      ctx.lineTo(-s * 0.52 + fLeg2 * 0.34, s * 1.32);
+
+      // Towering Long Graceful Neck Reaching Skyward
+      const headX = -s * 0.85;
+      const headY = -s * 2.35;
+
+      ctx.lineTo(-s * 0.56, -s * 0.85);
+      ctx.lineTo(headX, headY);
+      ctx.lineTo(headX - s * 0.30, headY + s * 0.16); // Muzzle
+      ctx.lineTo(headX - s * 0.16, headY - s * 0.16); // Crown
+      ctx.closePath();
+      ctx.fill();
+      if (depth > 0.30) ctx.stroke();
+
+      // Giraffe Crown Ossicones (Rounded Knobby Horns)
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(254, 240, 138, ${Math.min(1.0, depth * 1.4)})`;
+      ctx.lineWidth = Math.max(1.4 * this.dpr, 2.2 * scale);
+      ctx.moveTo(headX - s * 0.08, headY - s * 0.12);
+      ctx.lineTo(headX - s * 0.08, headY - s * 0.36);
+      ctx.moveTo(headX - s * 0.18, headY - s * 0.10);
+      ctx.lineTo(headX - s * 0.18, headY - s * 0.34);
+      ctx.stroke();
+
+      // Tufted Knobs
+      ctx.fillStyle = `rgba(20, 6, 2, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(headX - s * 0.08, headY - s * 0.36, 1.8 * scale, 0, Math.PI * 2);
+      ctx.arc(headX - s * 0.18, headY - s * 0.34, 1.8 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rich Geometric Polygon Coat Spots Along Neck & Flanks
+      if (depth > 0.30) {
+        ctx.fillStyle = `rgba(245, 158, 11, ${0.45 * depth})`;
+        // Neck patches
+        for (let p = 0; p < 5; p++) {
+          const py = -s * 0.70 - p * s * 0.32;
+          const px = -s * 0.42 + (headX + s * 0.42) * (p / 5);
+          ctx.beginPath();
+          ctx.arc(px, py, 2.8 * scale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Body flank patches
+        ctx.beginPath();
+        ctx.arc(s * 0.15, -s * 0.40, 3.2 * scale, 0, Math.PI * 2);
+        ctx.arc(s * 0.35, -s * 0.28, 3.0 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    /* 7. SLITHERING DESERT SNAKE - Diamondback dorsal pattern, triangular viper head, forked tongue */
     _drawSnake(ctx, x, y, scale, depth, sn, isStopped) {
       ctx.save();
-      ctx.translate(x, y);
+      if (x || y) ctx.translate(x, y);
 
       const alpha = Math.min(1.0, 0.45 + depth * 0.55);
-      ctx.strokeStyle = `rgba(28, 14, 5, ${alpha})`;
-      ctx.lineWidth = Math.max(2.4 * this.dpr, 4.5 * scale);
+      ctx.strokeStyle = `rgba(32, 14, 4, ${alpha})`;
+      ctx.lineWidth = Math.max(3.2 * this.dpr, 6.2 * scale); // Enlarged body thickness
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      const length = 38 * scale;
+      const length = 56 * scale; // Enlarged snake length
       const wavePhase = sn.slitherPhase || 0;
-      const numSegments = 16;
+      const numSegments = 20;
 
       ctx.beginPath();
       for (let i = 0; i < numSegments; i++) {
         const u = i / (numSegments - 1);
         const segX = (u - 0.5) * length;
-        const segY = Math.sin(wavePhase + u * Math.PI * 3.5) * (4.5 * scale * (1 - u * 0.3));
+        const segY = Math.sin(wavePhase + u * Math.PI * 3.8) * (5.5 * scale * (1 - u * 0.3));
         if (i === 0) {
           ctx.moveTo(segX, segY);
         } else {
@@ -2453,21 +3248,50 @@
       }
       ctx.stroke();
 
-      // Snake Head & Golden Eyes
+      // Diamondback Dorsal Geometric Pattern Along Spine
+      if (depth > 0.30) {
+        ctx.fillStyle = `rgba(217, 119, 6, ${0.75 * alpha})`;
+        for (let d = 2; d < numSegments - 2; d += 2) {
+          const du = d / (numSegments - 1);
+          const dx = (du - 0.5) * length;
+          const dy = Math.sin(wavePhase + du * Math.PI * 3.8) * (5.5 * scale * (1 - du * 0.3));
+          ctx.beginPath();
+          ctx.moveTo(dx, dy - 2.5 * scale);
+          ctx.lineTo(dx + 2.5 * scale, dy);
+          ctx.lineTo(dx, dy + 2.5 * scale);
+          ctx.lineTo(dx - 2.5 * scale, dy);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // Broad Triangular Viper Head
       const headX = -length * 0.5;
-      const headY = Math.sin(wavePhase) * (4.5 * scale);
-      ctx.fillStyle = `rgba(32, 16, 6, ${alpha})`;
+      const headY = Math.sin(wavePhase) * (5.5 * scale);
+      ctx.fillStyle = `rgba(36, 16, 4, ${alpha})`;
       ctx.beginPath();
-      ctx.arc(headX, headY, 2.8 * scale, 0, Math.PI * 2);
+      ctx.arc(headX, headY, 3.6 * scale, 0, Math.PI * 2);
       ctx.fill();
 
-      // Slender flicking tongue while moving
-      if (!isStopped && Math.sin(wavePhase * 2) > 0.4) {
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
-        ctx.lineWidth = 1.0 * this.dpr;
+      // Predatory Golden Eyes
+      if (depth > 0.30) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(headX - 1.2 * scale, headY - 1.8 * scale, 1.2 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Flickering Forked Red Tongue
+      if (Math.sin(wavePhase * 2.5) > 0.2) {
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.92)';
+        ctx.lineWidth = Math.max(1.0 * this.dpr, 1.6 * scale);
         ctx.beginPath();
         ctx.moveTo(headX, headY);
-        ctx.lineTo(headX - 6 * scale, headY);
+        ctx.lineTo(headX - 8 * scale, headY);
+        // Fork tips
+        ctx.lineTo(headX - 11 * scale, headY - 2.5 * scale);
+        ctx.moveTo(headX - 8 * scale, headY);
+        ctx.lineTo(headX - 11 * scale, headY + 2.5 * scale);
         ctx.stroke();
       }
 
