@@ -170,7 +170,8 @@
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         canvas.style.display = 'none';
-        canvas.style.zIndex = '1';
+        canvas.style.zIndex = '3';
+        canvas.style.borderRadius = '11px';
         canvas.style.touchAction = 'none';
         canvas.style.cursor = 'grab';
         this.container.appendChild(canvas);
@@ -319,183 +320,97 @@
       this.pcbVias = [];
 
       // 1. Integrated Circuits (ICs) & Active Hardware Components (Normalized [-1, 1] Coordinates)
-      // Scaled and positioned in safe quadrants so the entire circuit board is visible and clear of HUD overlays
+      // Clean, focused layout: Central Hero DSP Chip flanked by 2 iconic secondary components
       this.pcbComponents = [
         {
           id: 'u1_cpu',
           type: 'qfp',
           name: 'SYNTH-DSP 8800',
-          sub: 'ARM KINETIC-DSP 180MHz',
+          sub: 'ARM AUDIO DSP',
           nx: 0.0,
           ny: 0.0,
-          nw: 0.72,
+          nw: 0.62,
           nh: 0.62,
           pins: 32 // 8 per side
-        },
-        {
-          id: 'u2_eeprom',
-          type: 'soic',
-          name: '24C512',
-          sub: 'EEPROM',
-          nx: 0.68,
-          ny: -0.40,
-          nw: 0.16,
-          nh: 0.18,
-          pins: 8 // 4 per side
         },
         {
           id: 'y1_crystal',
           type: 'crystal',
           name: '16.000 MHz',
           sub: 'OSC',
-          nx: -0.68,
-          ny: -0.40,
-          nw: 0.18,
-          nh: 0.11,
-          pins: 2
-        },
-        {
-          id: 'vr1_reg',
-          type: 'dpack',
-          name: '78M05',
-          sub: '5V REG',
-          nx: -0.70,
-          ny: 0.38,
-          nw: 0.16,
-          nh: 0.14,
-          pins: 3
-        },
-        {
-          id: 'l1_choke',
-          type: 'inductor',
-          name: '10µH',
-          sub: 'CHOKE',
-          nx: -0.46,
-          ny: 0.46,
-          nw: 0.12,
+          nx: -0.58,
+          ny: -0.58,
+          nw: 0.24,
           nh: 0.12,
           pins: 2
         },
         {
-          id: 'c_bulk',
-          type: 'can_cap',
-          name: '220µF',
-          sub: '25V',
-          nx: -0.22,
-          ny: 0.48,
-          nw: 0.13,
-          nh: 0.13,
-          pins: 2
-        },
-        // SMT 0805 Chip Capacitors & Resistors
-        { id: 'c1', type: 'passive', kind: 'cap', name: 'C1', nx: -0.48, ny: -0.44, nw: 0.045, nh: 0.03 },
-        { id: 'c2', type: 'passive', kind: 'cap', name: 'C2', nx: -0.48, ny: -0.36, nw: 0.045, nh: 0.03 },
-        { id: 'c3', type: 'passive', kind: 'cap', name: 'C3', nx: 0.48, ny: -0.44, nw: 0.045, nh: 0.03 },
-        { id: 'c4', type: 'passive', kind: 'cap', name: 'C4', nx: 0.62, ny: 0.38, nw: 0.045, nh: 0.03 },
-        { id: 'c5', type: 'passive', kind: 'cap', name: 'C5', nx: -0.16, ny: 0.44, nw: 0.045, nh: 0.03 },
-        { id: 'r1', type: 'passive', kind: 'res', name: 'R1', nx: -0.36, ny: -0.46, nw: 0.045, nh: 0.03 },
-        { id: 'r2', type: 'passive', kind: 'res', name: 'R2', nx: 0.36, ny: -0.46, nw: 0.045, nh: 0.03 },
-        { id: 'r3', type: 'passive', kind: 'res', name: 'R3', nx: 0.48, ny: -0.36, nw: 0.045, nh: 0.03 },
-        { id: 'r4', type: 'passive', kind: 'res', name: 'R4', nx: -0.52, ny: -0.04, nw: 0.045, nh: 0.03 },
-        { id: 'r5', type: 'passive', kind: 'res', name: 'R5', nx: 0.52, ny: -0.04, nw: 0.045, nh: 0.03 }
+          id: 'u2_eeprom',
+          type: 'soic',
+          name: '24C512',
+          sub: 'SOUND ROM',
+          nx: 0.58,
+          ny: -0.58,
+          nw: 0.20,
+          nh: 0.20,
+          pins: 8 // 4 per side
+        }
       ];
 
-      // 2. Telemetry Sensor Test Points (Positioned safely away from HUD buttons and compass)
-      this.pcbTestPoints = [
-        { id: 'TP_CLK', label: 'TP_CLK', sub: '16M OSC', nx: -0.36, ny: -0.50, color: '#22c55e', active: true },
-        { id: 'TP_BUS', label: 'TP_BUS', sub: 'I2C/SPI', nx: 0.36, ny: -0.50, color: '#ffd700', active: true },
-        { id: 'TP_GYRO', label: 'TP_GYRO', sub: 'IMU VEC', nx: -0.76, ny: -0.04, color: '#38bdf8', active: true },
-        { id: 'TP_SPD', label: 'TP_SPD', sub: 'SPEED', nx: 0.76, ny: -0.04, color: '#ffd700', active: true },
-        { id: 'VCC', label: '+5V', sub: 'LDO RAIL', nx: -0.70, ny: 0.60, color: '#ef4444', active: true },
-        { id: 'GND', label: 'GND', sub: 'GROUND', nx: 0.70, ny: 0.60, color: '#22c55e', active: true }
-      ];
+      // 2. Zero Micro-Clutter Test Points
+      this.pcbTestPoints = [];
 
-      // 3. Plated Through-Hole Vias (Annular Gold Rings with central drill holes)
+      // 3. Four Precision Corner Mounting Holes (Gold Annular Rings with Dark Drill Vias)
       const viaCoords = [
-        [-0.56, -0.48], [-0.44, -0.50], [-0.28, -0.40], [-0.18, -0.34],
-        [0.18, -0.34], [0.28, -0.40], [0.44, -0.50], [0.56, -0.48],
-        [-0.76, -0.20], [-0.76, 0.16], [-0.60, 0.22], [-0.48, 0.32],
-        [0.76, -0.20], [0.76, 0.16], [0.60, 0.22], [0.48, 0.32],
-        [-0.30, 0.54], [-0.14, 0.52], [0.24, 0.52], [0.38, 0.54],
-        [-0.16, -0.33], [0.16, -0.33], [-0.16, 0.33], [0.16, 0.33]
+        [-0.84, -0.84], [0.84, -0.84],
+        [-0.84, 0.84], [0.84, 0.84]
       ];
       this.pcbVias = viaCoords.map(([nx, ny], idx) => ({
         id: `via_${idx}`,
         nx,
         ny,
-        radius: 2.8,
-        holeRadius: 1.2,
-        glow: 0.3 + Math.random() * 0.4
+        radius: 4.2,
+        holeRadius: 2.0,
+        glow: 0.45
       }));
 
-      // 4. Conductive PCB Traces with 45° Chamfered Doglegs
+      // 4. Conductive Gold & Copper PCB Traces with 45° Chamfered Doglegs
       const rawTraces = [
-        // Differential Clock Bus: Crystal Y1 -> Load Caps -> CPU Top Pins
+        // Differential Clock Bus: Crystal Y1 -> CPU Top-Left Pins
         {
-          pts: [{nx: -0.59, ny: -0.42}, {nx: -0.48, ny: -0.42}, {nx: -0.38, ny: -0.38}, {nx: -0.22, ny: -0.38}, {nx: -0.22, ny: -0.31}],
-          type: 'clock', width: 1.6, color: '#22c55e', alpha: 0.40
+          pts: [{nx: -0.46, ny: -0.58}, {nx: -0.32, ny: -0.58}, {nx: -0.18, ny: -0.44}, {nx: -0.18, ny: -0.30}],
+          type: 'clock', width: 2.0, color: '#22c55e', alpha: 0.60
         },
         {
-          pts: [{nx: -0.59, ny: -0.38}, {nx: -0.46, ny: -0.38}, {nx: -0.36, ny: -0.35}, {nx: -0.16, ny: -0.35}, {nx: -0.16, ny: -0.31}],
-          type: 'clock', width: 1.6, color: '#22c55e', alpha: 0.40
+          pts: [{nx: -0.46, ny: -0.54}, {nx: -0.30, ny: -0.54}, {nx: -0.12, ny: -0.36}, {nx: -0.12, ny: -0.30}],
+          type: 'clock', width: 2.0, color: '#22c55e', alpha: 0.60
         },
-        // High-Speed Data Bus: CPU Top Pins -> EEPROM Memory
+        // High-Speed Sound ROM Bus: EEPROM -> CPU Top-Right Pins
         {
-          pts: [{nx: 0.16, ny: -0.31}, {nx: 0.16, ny: -0.35}, {nx: 0.36, ny: -0.35}, {nx: 0.46, ny: -0.38}, {nx: 0.60, ny: -0.38}],
-          type: 'bus', width: 1.5, color: '#ffd700', alpha: 0.48
-        },
-        {
-          pts: [{nx: 0.22, ny: -0.31}, {nx: 0.22, ny: -0.38}, {nx: 0.38, ny: -0.38}, {nx: 0.48, ny: -0.42}, {nx: 0.60, ny: -0.42}],
-          type: 'bus', width: 1.5, color: '#ffd700', alpha: 0.48
-        },
-        // Speed Telemetry Line: TP_SPD -> R5 -> CPU Right Pin
-        {
-          pts: [{nx: 0.72, ny: -0.04}, {nx: 0.56, ny: -0.04}, {nx: 0.48, ny: -0.04}, {nx: 0.36, ny: -0.04}],
-          type: 'speed', width: 2.0, color: '#ffd700', alpha: 0.55
+          pts: [{nx: 0.48, ny: -0.58}, {nx: 0.32, ny: -0.58}, {nx: 0.18, ny: -0.44}, {nx: 0.18, ny: -0.30}],
+          type: 'bus', width: 2.0, color: '#ffd700', alpha: 0.65
         },
         {
-          pts: [{nx: 0.72, ny: -0.04}, {nx: 0.64, ny: 0.12}, {nx: 0.52, ny: 0.22}, {nx: 0.44, ny: 0.22}, {nx: 0.36, ny: 0.12}],
-          type: 'speed', width: 1.5, color: '#ffd700', alpha: 0.40
+          pts: [{nx: 0.48, ny: -0.54}, {nx: 0.30, ny: -0.54}, {nx: 0.12, ny: -0.36}, {nx: 0.12, ny: -0.30}],
+          type: 'bus', width: 2.0, color: '#ffd700', alpha: 0.65
         },
-        // Gyro IMU Line: TP_GYRO -> R4 -> CPU Left Pin
+        // Stereo Audio DAC Output: CPU Bottom Pins -> Lower Corner Audio Terminals
         {
-          pts: [{nx: -0.72, ny: -0.04}, {nx: -0.56, ny: -0.04}, {nx: -0.48, ny: -0.04}, {nx: -0.36, ny: -0.04}],
-          type: 'gyro', width: 2.0, color: '#38bdf8', alpha: 0.55
-        },
-        {
-          pts: [{nx: -0.72, ny: -0.04}, {nx: -0.64, ny: 0.12}, {nx: -0.52, ny: 0.22}, {nx: -0.44, ny: 0.22}, {nx: -0.36, ny: 0.12}],
-          type: 'gyro', width: 1.5, color: '#38bdf8', alpha: 0.40
-        },
-        // Power Distribution: VCC -> VR1 -> L1 -> C_BULK -> CPU Bottom Power Pins
-        {
-          pts: [{nx: -0.70, ny: 0.56}, {nx: -0.70, ny: 0.46}],
-          type: 'power', width: 2.6, color: '#ef4444', alpha: 0.50
+          pts: [{nx: -0.16, ny: 0.30}, {nx: -0.16, ny: 0.45}, {nx: -0.36, ny: 0.65}, {nx: -0.65, ny: 0.65}],
+          type: 'audio_l', width: 2.4, color: '#38bdf8', alpha: 0.70
         },
         {
-          pts: [{nx: -0.62, ny: 0.38}, {nx: -0.54, ny: 0.46}],
-          type: 'power', width: 2.4, color: '#f59e0b', alpha: 0.50
+          pts: [{nx: 0.16, ny: 0.30}, {nx: 0.16, ny: 0.45}, {nx: 0.36, ny: 0.65}, {nx: 0.65, ny: 0.65}],
+          type: 'audio_r', width: 2.4, color: '#fb923c', alpha: 0.70
+        },
+        // Lateral Telemetry Bus Lines (Gyro IMU & Speed Vector)
+        {
+          pts: [{nx: -0.76, ny: 0.0}, {nx: -0.30, ny: 0.0}],
+          type: 'gyro', width: 2.2, color: '#38bdf8', alpha: 0.65
         },
         {
-          pts: [{nx: -0.38, ny: 0.46}, {nx: -0.30, ny: 0.48}],
-          type: 'power', width: 2.4, color: '#ffd700', alpha: 0.45
-        },
-        {
-          pts: [{nx: -0.16, ny: 0.44}, {nx: -0.16, ny: 0.38}, {nx: -0.16, ny: 0.31}],
-          type: 'power', width: 2.4, color: '#ffd700', alpha: 0.45
-        },
-        // Chassis Ground Plane Stitches
-        {
-          pts: [{nx: 0.70, ny: 0.56}, {nx: 0.52, ny: 0.48}, {nx: 0.34, ny: 0.40}, {nx: 0.20, ny: 0.40}, {nx: 0.16, ny: 0.31}],
-          type: 'ground', width: 2.2, color: '#22c55e', alpha: 0.42
-        },
-        // Top Interconnect Stitches
-        {
-          pts: [{nx: -0.34, ny: -0.38}, {nx: -0.26, ny: -0.38}, {nx: -0.18, ny: -0.30}, {nx: -0.12, ny: -0.20}],
-          type: 'bus', width: 1.4, color: '#22c55e', alpha: 0.36
-        },
-        {
-          pts: [{nx: 0.34, ny: -0.38}, {nx: 0.26, ny: -0.38}, {nx: 0.18, ny: -0.30}, {nx: 0.12, ny: -0.20}],
-          type: 'bus', width: 1.4, color: '#ffd700', alpha: 0.36
+          pts: [{nx: 0.76, ny: 0.0}, {nx: 0.30, ny: 0.0}],
+          type: 'speed', width: 2.2, color: '#ffd700', alpha: 0.65
         }
       ];
 
@@ -523,18 +438,17 @@
         };
       });
 
-      // 5. Kinetic Data Packets (Conductive Current Pulses)
+      // 5. Kinetic Data Packets (Conductive Current Pulses along the 8 hero buses)
       this.dataPackets = [];
-      const packetColors = ['#ffd700', '#ffd700', '#22c55e', '#38bdf8', '#eab308', '#ffffff'];
-      for (let k = 0; k < 22; k++) {
-        const traceIdx = Math.floor(Math.random() * this.circuitTraces.length);
+      const packetColors = ['#22c55e', '#22c55e', '#ffd700', '#ffd700', '#38bdf8', '#fb923c', '#38bdf8', '#ffd700'];
+      for (let k = 0; k < 8; k++) {
         this.dataPackets.push({
-          traceIdx: traceIdx,
-          t: Math.random(),
-          baseSpeed: 0.008 + Math.random() * 0.015,
+          traceIdx: k % this.circuitTraces.length,
+          t: (k * 0.125) % 1.0,
+          baseSpeed: 0.008 + (k % 3) * 0.004,
           color: packetColors[k % packetColors.length],
-          size: 2.0 + Math.random() * 1.4,
-          trailLen: 0.08 + Math.random() * 0.08
+          size: 2.6,
+          trailLen: 0.14
         });
       }
     }
@@ -1529,76 +1443,81 @@
       const isBraking = this.sensorAccel < -0.4;
       const isSpm = speed >= 65;
 
+      // Dedicated Square Module Bounds (1:1 Aspect Ratio anchored to square map bounds)
+      const boardSize = Math.min(w, h) * 0.90;
+      const boardRadius = boardSize * 0.47;
+
       // Perspective Projection Coordinate Helper for Multi-Layer Parallax
       const project = (nx, ny, zOffset) => {
-        const px = cx + nx * (w * 0.47) + totalTiltX * zOffset * this.dpr * 0.85;
-        const py = cy + ny * (h * 0.45) + totalTiltY * zOffset * this.dpr * 0.85;
+        const px = cx + nx * boardRadius + totalTiltX * zOffset * this.dpr * 0.85;
+        const py = cy + ny * boardRadius + totalTiltY * zOffset * this.dpr * 0.85;
         return { x: px, y: py };
       };
 
       ctx.clearRect(0, 0, w, h);
 
       // -------------------------------------------------------------
-      // LAYER 0: Substrate & Silkscreen Layer (Depth Z = -0.35)
+      // LAYER 0: Centered 1:1 Square Substrate & Silkscreen (Depth Z = -0.35)
       // -------------------------------------------------------------
       const subOffX = totalTiltX * -0.35 * this.dpr * 0.85;
       const subOffY = totalTiltY * -0.35 * this.dpr * 0.85;
 
-      // Deep automotive soldermask fiberglass background
-      const pcbGrad = ctx.createLinearGradient(0, 0, w, h);
-      pcbGrad.addColorStop(0, '#021207');
-      pcbGrad.addColorStop(0.5, '#03170a');
-      pcbGrad.addColorStop(1, '#020e06');
-      ctx.fillStyle = pcbGrad;
+      // Deep ambient canvas background
+      ctx.fillStyle = '#020b05';
       ctx.fillRect(0, 0, w, h);
 
-      // Copper Ground Plane Hatch Patterns (Faint 45° diagonal grid in corners)
+      // Centered 1:1 Square PCB Substrate Frame
+      const boardLeft = cx - boardSize / 2 + subOffX;
+      const boardTop = cy - boardSize / 2 + subOffY;
+      const boardCornerR = 16 * this.dpr;
+
+      // Deep automotive soldermask fiberglass background inside square board
+      const pcbGrad = ctx.createLinearGradient(boardLeft, boardTop, boardLeft + boardSize, boardTop + boardSize);
+      pcbGrad.addColorStop(0, '#03170b');
+      pcbGrad.addColorStop(0.5, '#052210');
+      pcbGrad.addColorStop(1, '#021006');
+
       ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+      ctx.shadowBlur = 24 * this.dpr;
+      ctx.shadowOffsetX = -totalTiltX * 0.6 * this.dpr;
+      ctx.shadowOffsetY = -totalTiltY * 0.6 * this.dpr + 6 * this.dpr;
+
+      ctx.fillStyle = pcbGrad;
+      ctx.strokeStyle = '#15803d';
+      ctx.lineWidth = 2.0 * this.dpr;
+      ctx.beginPath();
+      ctx.roundRect(boardLeft, boardTop, boardSize, boardSize, boardCornerR);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Copper Ground Plane Hatch Patterns (Clean 45° diagonal grid inside the square board)
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(boardLeft, boardTop, boardSize, boardSize, boardCornerR);
+      ctx.clip();
       ctx.strokeStyle = 'rgba(21, 128, 61, 0.08)';
       ctx.lineWidth = 1.0 * this.dpr;
       const hatchStep = 18 * this.dpr;
-      for (let x = -h; x < w + h; x += hatchStep) {
+      for (let x = boardLeft - boardSize; x < boardLeft + boardSize * 2; x += hatchStep) {
         ctx.beginPath();
-        ctx.moveTo(x + subOffX * 0.5, 0);
-        ctx.lineTo(x + h + subOffX * 0.5, h);
+        ctx.moveTo(x, boardTop);
+        ctx.lineTo(x + boardSize, boardTop + boardSize);
         ctx.stroke();
       }
 
-      // Outer Silkscreen Alignment Frame & Corner Fiducials
-      const framePad = 16 * this.dpr;
-      ctx.strokeStyle = 'rgba(34, 197, 94, 0.22)';
+      // Outer Silkscreen Alignment Frame inside square board
+      const innerPad = 12 * this.dpr;
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.28)';
       ctx.lineWidth = 1.2 * this.dpr;
-      ctx.strokeRect(framePad + subOffX, framePad + subOffY, w - framePad * 2, h - framePad * 2);
+      ctx.strokeRect(boardLeft + innerPad, boardTop + innerPad, boardSize - innerPad * 2, boardSize - innerPad * 2);
 
-      // Corner Fiducial Crosshairs
-      const fiducials = [
-        { x: framePad + 14 * this.dpr, y: framePad + 14 * this.dpr },
-        { x: w - framePad - 14 * this.dpr, y: framePad + 14 * this.dpr },
-        { x: framePad + 14 * this.dpr, y: h - framePad - 14 * this.dpr },
-        { x: w - framePad - 14 * this.dpr, y: h - framePad - 14 * this.dpr }
-      ];
-      ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)';
-      ctx.lineWidth = 1.2 * this.dpr;
-      fiducials.forEach(f => {
-        const fx = f.x + subOffX;
-        const fy = f.y + subOffY;
-        ctx.beginPath();
-        ctx.moveTo(fx - 6 * this.dpr, fy);
-        ctx.lineTo(fx + 6 * this.dpr, fy);
-        ctx.moveTo(fx, fy - 6 * this.dpr);
-        ctx.lineTo(fx, fy + 6 * this.dpr);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(fx, fy, 4 * this.dpr, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-
-      // Silkscreen Board Legend & Engineering Text (Positioned safely away from HUD compass/expand buttons)
+      // Silkscreen Board Legend along bottom edge of square board
       ctx.font = `700 ${Math.round(8.5 * this.dpr)}px "Courier New", monospace`;
-      ctx.fillStyle = 'rgba(74, 222, 128, 0.35)';
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.45)';
       ctx.textAlign = 'center';
-      ctx.fillText('[ NOMAD KINETIC-DSP // 180MHz ]', cx + subOffX, cy - 62 * this.dpr + subOffY);
-      ctx.fillText('[ SENSORY BUS REV 3.2 // IMU COUPLED ]', cx + subOffX, cy + 68 * this.dpr + subOffY);
+      ctx.fillText('[ NOMAD SYNTHOMATIC SENSORY BUS // 16-BIT AUDIO DSP ]', cx + subOffX, boardTop + boardSize - innerPad - 6 * this.dpr);
       ctx.restore();
 
       // -------------------------------------------------------------
@@ -1785,7 +1704,7 @@
       }
       ctx.restore();
 
-      // Regenerative Braking Energy Dissipation Surge (Reverse Pulses)
+      // Regenerative Braking Energy Dissipation Surge (Reverse Pulses from DSP)
       if (isBraking) {
         ctx.save();
         ctx.lineWidth = 3.0 * this.dpr;
@@ -1793,9 +1712,9 @@
         ctx.shadowColor = '#f43f5e';
         ctx.shadowBlur = 14 * this.dpr;
         ctx.globalAlpha = Math.min(0.8, Math.abs(this.sensorAccel) * 0.3);
-        const pCap = project(-0.64, 0.74, 0.0);
+        const pDsp = project(0.0, 0.0, 0.0);
         ctx.beginPath();
-        ctx.arc(pCap.x, pCap.y, (18 + (Date.now() % 400) * 0.08) * this.dpr, 0, Math.PI * 2);
+        ctx.arc(pDsp.x, pDsp.y, (boxW * 0.5 + 10 + (Date.now() % 400) * 0.08) * this.dpr, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
@@ -1808,17 +1727,26 @@
       const compShadowOffX = -totalTiltX * 0.45 * this.dpr;
       const compShadowOffY = -totalTiltY * 0.45 * this.dpr + 3 * this.dpr;
 
+      // Micro-display bezel dimensions (synchronized between QFP package and HUD layer)
+      const boxW = Math.min(136 * this.dpr, boardSize * 0.44);
+      const boxH = Math.min(114 * this.dpr, boardSize * 0.38);
+
       for (let i = 0; i < this.pcbComponents.length; i++) {
         const comp = this.pcbComponents[i];
         const cpt = project(comp.nx, comp.ny, icZ);
-        const cw = comp.nw * (w * 0.47);
-        const ch = comp.nh * (h * 0.45);
+        let cw = comp.nw * boardRadius;
+        let ch = comp.nh * boardRadius;
+        if (comp.type === 'qfp') {
+          // QFP package frame extends neatly around the embedded micro-display
+          cw = boxW + 24 * this.dpr;
+          ch = boxH + 20 * this.dpr;
+        }
         const cx0 = cpt.x - cw / 2;
         const cy0 = cpt.y - ch / 2;
 
         if (comp.type === 'qfp') {
           // Central Microprocessor / DSP Chip (SYNTH-DSP 8800)
-          // 1. Gull-wing solder pins
+          // 1. Gull-wing solder pins (32 total QFP pins extending outward)
           const pinsPerSide = 8;
           ctx.fillStyle = '#e2e8f0';
           ctx.strokeStyle = '#94a3b8';
@@ -1857,14 +1785,14 @@
           ctx.stroke();
           ctx.restore();
 
-          // Pin 1 Index Dot (Chamfered Top-Left)
+          // Pin 1 Index Dot (Chamfered Top-Left outside display perimeter)
           ctx.beginPath();
-          ctx.arc(cx0 + 10 * this.dpr, cy0 + 10 * this.dpr, 2.8 * this.dpr, 0, Math.PI * 2);
+          ctx.arc(cx0 + 7 * this.dpr, cy0 + 7 * this.dpr, 2.2 * this.dpr, 0, Math.PI * 2);
           ctx.fillStyle = '#eab308';
           ctx.fill();
 
         } else if (comp.type === 'soic') {
-          // SOIC-8 EEPROM Chip
+          // SOIC-8 Sound ROM / Memory Chip
           ctx.save();
           ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
           ctx.shadowBlur = 8 * this.dpr;
@@ -1888,13 +1816,13 @@
             ctx.fillRect(cx0 + cw, py - 1.2 * this.dpr, 4 * this.dpr, 2.4 * this.dpr);
           }
 
-          ctx.font = `800 ${Math.round(8 * this.dpr)}px "Courier New", monospace`;
+          ctx.font = `800 ${Math.round(7.5 * this.dpr)}px "Courier New", monospace`;
           ctx.fillStyle = '#e2e8f0';
           ctx.textAlign = 'center';
-          ctx.fillText(comp.name, cpt.x, cpt.y + 3 * this.dpr);
+          ctx.fillText(comp.name, cpt.x, cpt.y + 2.5 * this.dpr);
 
         } else if (comp.type === 'crystal') {
-          // Quartz Crystal Can (Brushed Aluminum)
+          // Quartz Crystal Oscillator Can (Brushed Metallic Aluminum)
           ctx.save();
           ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
           ctx.shadowBlur = 8 * this.dpr;
@@ -1914,71 +1842,15 @@
           ctx.stroke();
           ctx.restore();
 
-          ctx.font = `800 ${Math.round(8 * this.dpr)}px "Courier New", monospace`;
+          // Silver Solder End Pads
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(cx0 - 3 * this.dpr, cy0 + ch * 0.2, 3 * this.dpr, ch * 0.6);
+          ctx.fillRect(cx0 + cw, cy0 + ch * 0.2, 3 * this.dpr, ch * 0.6);
+
+          ctx.font = `800 ${Math.round(7.5 * this.dpr)}px "Courier New", monospace`;
           ctx.fillStyle = '#0f172a';
           ctx.textAlign = 'center';
-          ctx.fillText(comp.name, cpt.x, cpt.y + 3 * this.dpr);
-
-        } else if (comp.type === 'dpack') {
-          // Power Regulator DPAK
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(cx0, cy0, cw, ch);
-          // Heat sink tab
-          ctx.fillStyle = '#64748b';
-          ctx.fillRect(cx0 + 2 * this.dpr, cy0 - 4 * this.dpr, cw - 4 * this.dpr, 4 * this.dpr);
-          ctx.font = `700 ${Math.round(7.5 * this.dpr)}px "Courier New", monospace`;
-          ctx.fillStyle = '#f8fafc';
-          ctx.textAlign = 'center';
-          ctx.fillText(comp.name, cpt.x, cpt.y + 2 * this.dpr);
-
-        } else if (comp.type === 'inductor') {
-          // Choke Inductor Coil
-          ctx.beginPath();
-          ctx.arc(cpt.x, cpt.y, cw / 2, 0, Math.PI * 2);
-          ctx.fillStyle = '#0f172a';
-          ctx.fill();
-          ctx.strokeStyle = '#b45309';
-          ctx.lineWidth = 2.0 * this.dpr;
-          ctx.stroke();
-          ctx.font = `700 ${Math.round(7 * this.dpr)}px "Courier New", monospace`;
-          ctx.fillStyle = '#eab308';
-          ctx.textAlign = 'center';
-          ctx.fillText('10µH', cpt.x, cpt.y + 3 * this.dpr);
-
-        } else if (comp.type === 'can_cap') {
-          // Bulk Electrolytic Can Capacitor
-          ctx.beginPath();
-          ctx.arc(cpt.x, cpt.y, cw / 2, 0, Math.PI * 2);
-          ctx.fillStyle = '#1e293b';
-          ctx.fill();
-          ctx.strokeStyle = '#64748b';
-          ctx.lineWidth = 1.4 * this.dpr;
-          ctx.stroke();
-          // Negative polarity stripe
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(cpt.x - cw / 2, cpt.y - ch / 2, cw * 0.3, ch);
-          ctx.font = `700 ${Math.round(6.5 * this.dpr)}px "Courier New", monospace`;
-          ctx.fillStyle = '#ffffff';
-          ctx.textAlign = 'center';
-          ctx.fillText('220µF', cpt.x, cpt.y + 2.5 * this.dpr);
-
-        } else if (comp.type === 'passive') {
-          // SMT 0805 Passives (Capacitors = Tan, Resistors = Black)
-          const bodyColor = comp.kind === 'cap' ? '#d4a373' : '#111827';
-          ctx.fillStyle = bodyColor;
-          ctx.fillRect(cx0, cy0, cw, ch);
-
-          // Silver Solder End Caps
-          ctx.fillStyle = '#e2e8f0';
-          const capW = cw * 0.28;
-          ctx.fillRect(cx0, cy0, capW, ch);
-          ctx.fillRect(cx0 + cw - capW, cy0, capW, ch);
-
-          // Tiny Silkscreen Label
-          ctx.font = `700 ${Math.round(6.5 * this.dpr)}px "Courier New", monospace`;
-          ctx.fillStyle = 'rgba(226, 232, 240, 0.7)';
-          ctx.textAlign = 'center';
-          ctx.fillText(comp.name, cpt.x, cy0 - 3 * this.dpr);
+          ctx.fillText(comp.name, cpt.x, cpt.y + 2.5 * this.dpr);
         }
       }
       ctx.restore();
@@ -2031,8 +1903,6 @@
       const hudCenterY = cy + totalTiltY * hudZ * this.dpr * 0.85;
 
       // Precision Cyber Micro-Display Bezel (Embedded over central DSP package)
-      const boxW = Math.min(168 * this.dpr, w * 0.44);
-      const boxH = Math.min(106 * this.dpr, h * 0.38);
       const boxX = hudCenterX - boxW / 2;
       const boxY = hudCenterY - boxH / 2;
       const cornerR = 7 * this.dpr;
@@ -2083,45 +1953,45 @@
         if (diff < 0.14) {
           const intensity = 1.0 - (diff / 0.14);
           ctx.beginPath();
-          ctx.arc(beadPt.x, beadPt.y, 3.2 * this.dpr, 0, Math.PI * 2);
+          ctx.arc(beadPt.x, beadPt.y, 2.4 * this.dpr, 0, Math.PI * 2);
           ctx.fillStyle = activeThemeColor;
           ctx.shadowColor = activeThemeColor;
-          ctx.shadowBlur = intensity * 10 * this.dpr;
+          ctx.shadowBlur = intensity * 8 * this.dpr;
           ctx.fill();
 
           if (intensity > 0.7) {
             ctx.beginPath();
-            ctx.arc(beadPt.x, beadPt.y, 1.4 * this.dpr, 0, Math.PI * 2);
+            ctx.arc(beadPt.x, beadPt.y, 1.2 * this.dpr, 0, Math.PI * 2);
             ctx.fillStyle = '#ffffff';
             ctx.fill();
           }
           ctx.shadowBlur = 0;
         } else {
           ctx.beginPath();
-          ctx.arc(beadPt.x, beadPt.y, 1.2 * this.dpr, 0, Math.PI * 2);
+          ctx.arc(beadPt.x, beadPt.y, 1.0 * this.dpr, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(34, 197, 94, 0.22)';
           ctx.fill();
         }
       }
 
       // Title header
-      ctx.font = `900 ${Math.round(10.5 * this.dpr)}px "Courier New", monospace`;
+      ctx.font = `900 ${Math.round(9.5 * this.dpr)}px "Courier New", monospace`;
       ctx.fillStyle = activeThemeColor;
       ctx.shadowColor = activeThemeColor;
       ctx.shadowBlur = 6 * this.dpr;
       ctx.textAlign = 'center';
-      ctx.fillText('SYNTHOMATIC', hudCenterX, boxY + 15 * this.dpr);
+      ctx.fillText('SYNTHOMATIC', hudCenterX, boxY + 14 * this.dpr);
       ctx.shadowBlur = 0;
 
       // 3 Columns: Left, Center, Right Equalizer
       const numCols = 3;
-      const colWidth = (boxW - 32 * this.dpr) / numCols;
-      const colGap = 6 * this.dpr;
+      const colWidth = (boxW - 28 * this.dpr) / numCols;
+      const colGap = 5 * this.dpr;
       const leftStartX = hudCenterX - (numCols * colWidth + (numCols - 1) * colGap) / 2;
 
       const segmentsPerCol = [8, 10, 8];
-      const segH = 3.8 * this.dpr;
-      const segG = 2.0 * this.dpr;
+      const segH = 3.0 * this.dpr;
+      const segG = 1.5 * this.dpr;
 
       for (let c = 0; c < numCols; c++) {
         const colX = leftStartX + c * (colWidth + colGap);
@@ -2130,7 +2000,7 @@
         const midIndex = totalSegs / 2;
 
         const colTotalHeight = totalSegs * segH + (totalSegs - 1) * segG;
-        const colStartY = boxY + 18 * this.dpr + (boxH - 46 * this.dpr - colTotalHeight) / 2;
+        const colStartY = boxY + 20 * this.dpr + (boxH - 52 * this.dpr - colTotalHeight) / 2;
 
         for (let s = 0; s < totalSegs; s++) {
           const sy = colStartY + s * (segH + segG);
@@ -2163,21 +2033,21 @@
       else if (speed > 25) { stateLabel = 'PURSUIT MODE'; stateColor = '#ff3344'; }
       else if (speed > 0) { stateLabel = 'CRUISE VECTOR'; stateColor = '#eab308'; }
 
-      ctx.font = `900 ${Math.round(9.5 * this.dpr)}px "Courier New", monospace`;
+      ctx.font = `900 ${Math.round(8.5 * this.dpr)}px "Courier New", monospace`;
       ctx.fillStyle = stateColor;
       ctx.shadowColor = stateColor;
       ctx.shadowBlur = 5 * this.dpr;
       ctx.textAlign = 'center';
-      ctx.fillText(stateLabel, hudCenterX, boxY + boxH - 16 * this.dpr);
+      ctx.fillText(stateLabel, hudCenterX, boxY + boxH - 19 * this.dpr);
       ctx.shadowBlur = 0;
 
       // Real-Time Sensor Telemetry HUD Footer (Gyro Tilt & Accel Coupling)
-      ctx.font = `700 ${Math.round(7.5 * this.dpr)}px "Courier New", monospace`;
+      ctx.font = `700 ${Math.round(6.8 * this.dpr)}px "Courier New", monospace`;
       ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
       ctx.textAlign = 'center';
       const tiltXDeg = Math.round(totalTiltX);
       const tiltYDeg = Math.round(totalTiltY);
-      ctx.fillText(`IMU TILT: X:${tiltXDeg > 0 ? '+' : ''}${tiltXDeg}° Y:${tiltYDeg > 0 ? '+' : ''}${tiltYDeg}° // ${speed} MPH`, hudCenterX, boxY + boxH - 5 * this.dpr);
+      ctx.fillText(`IMU TILT: X:${tiltXDeg > 0 ? '+' : ''}${tiltXDeg}° Y:${tiltYDeg > 0 ? '+' : ''}${tiltYDeg}° // ${speed} MPH`, hudCenterX, boxY + boxH - 8 * this.dpr);
 
       ctx.restore();
 

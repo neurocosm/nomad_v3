@@ -219,7 +219,11 @@
       width: 100%;
       height: 100%;
       border-radius: 11px;
-      display: block !important;
+      display: block;
+    }
+
+    #map-card.is-starfield-mode #map {
+      display: none !important;
     }
 
     /* UNIFIED 4-CORNER BOUNDING BOX FRAMEWORK */
@@ -245,7 +249,7 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: #ffffff;
-      border: 2px solid rgba(255, 255, 255, var(--hud-badge-border-alpha, 0.22));
+      border: 2.5px solid rgba(203, 213, 225, 0.48);
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
       cursor: pointer;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -255,7 +259,7 @@
 
     .map-overlay-heading:active {
       transform: scale(0.92);
-      border-color: rgba(255, 255, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.75);
       box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
     }
 
@@ -265,7 +269,7 @@
       background: rgba(12, 16, 26, var(--hud-badge-bg-alpha, 0.88));
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 2px solid rgba(255, 255, 255, var(--hud-badge-border-alpha, 0.22));
+      border: 2.5px solid rgba(203, 213, 225, 0.48);
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
       cursor: pointer;
       padding: 2px;
@@ -273,12 +277,12 @@
 
     .map-overlay-compass:active {
       transform: scale(0.92);
-      border-color: rgba(255, 255, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.75);
       box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
     }
 
     .map-overlay-compass.active-heading-up {
-      border: 2px solid rgba(255, 255, 255, var(--hud-badge-border-alpha, 0.25));
+      border: 2.5px solid rgba(203, 213, 225, 0.52);
     }
 
     /* Light Theme Compass Dynamic High-Contrast Mode */
@@ -297,11 +301,17 @@
       fill: #dc2626 !important;
     }
 
+    .map-overlay-interstate.has-shield,
+    .map-overlay-route.has-shield,
     .map-overlay-interstate .highway-shield-badge,
-    .map-overlay-route .highway-shield-badge {
-      background: rgba(0, 0, 0, calc(var(--hud-badge-bg-alpha, 0.88) * 0.4));
-      border-radius: 12px;
-      padding: 1px;
+    .map-overlay-route .highway-shield-badge,
+    .map-overlay-interstate.has-shield svg,
+    .map-overlay-route.has-shield svg {
+      box-shadow: none !important;
+      filter: none !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0;
     }
 
     .compass-wrapper-overlay {
@@ -331,22 +341,123 @@
     .map-overlay-interstate {
       bottom: 8px;
       left: 8px;
-      background: transparent;
-      border: none;
-      box-shadow: none;
+      cursor: pointer;
     }
 
     .map-overlay-route {
       bottom: 8px;
       right: 8px;
-      background: transparent;
-      border: none;
-      box-shadow: none;
+      cursor: pointer;
     }
 
-    .map-overlay-interstate:empty,
-    .map-overlay-route:empty {
-      display: none;
+    .map-overlay-interstate:not(.has-shield),
+    .map-overlay-route:not(.has-shield) {
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      color: #ffffff;
+    }
+
+    .map-overlay-interstate.has-shield:active,
+    .map-overlay-route.has-shield:active {
+      transform: scale(0.92);
+      border-color: rgba(255, 255, 255, 0.75);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+    }
+
+    .corner-pod-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      pointer-events: none;
+    }
+
+    .map-pod-content {
+      align-items: flex-end;
+      justify-content: flex-start;
+      padding-bottom: 2px;
+      padding-left: 2px;
+    }
+
+    .die-pod-content {
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding-bottom: 2px;
+      padding-right: 2px;
+    }
+
+    .corner-pod-map-svg,
+    .corner-pod-dice-svg {
+      width: 22px;
+      height: 22px;
+      max-width: 24px;
+      max-height: 24px;
+      display: block;
+      color: rgba(241, 245, 249, 0.85);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+      pointer-events: none;
+    }
+
+    .map-overlay-interstate:not(.has-shield):hover .corner-pod-map-svg,
+    .map-overlay-route:not(.has-shield):hover .corner-pod-dice-svg {
+      color: #ffffff;
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
+    }
+
+    .map-overlay-interstate:not(.has-shield):active .corner-pod-map-svg,
+    .map-overlay-route:not(.has-shield):active .corner-pod-dice-svg {
+      color: #ffb703;
+      transform: scale(0.88);
+      filter: drop-shadow(0 0 10px rgba(255, 183, 3, 0.95));
+    }
+
+    .corner-pod-dice-svg.rolling {
+      animation: diceRollAnim 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Auto-Cycling Screensaver Active Pulse - Glowing Amber Breathing */
+    @keyframes diceAutoPulse {
+      0%   { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255, 183, 3, 0.6)); }
+      50%  { transform: scale(1.18); filter: drop-shadow(0 0 14px rgba(255, 183, 3, 1.0)) drop-shadow(0 0 22px rgba(251, 133, 0, 0.8)); color: #ffb703; }
+      100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255, 183, 3, 0.6)); }
+    }
+
+    .corner-pod-dice-svg.auto-cycling,
+    .map-overlay-route.auto-cycling .corner-pod-dice-svg {
+      animation: diceAutoPulse 1.6s infinite ease-in-out !important;
+      color: #ffb703 !important;
+    }
+
+    .map-overlay-route.auto-cycling {
+      box-shadow: 0 0 16px rgba(255, 183, 3, 0.75), inset 0 0 10px rgba(255, 183, 3, 0.3) !important;
+      border-radius: 14px;
+    }
+
+    @keyframes diceRollAnim {
+      0% { transform: rotate(0deg) scale(1); }
+      35% { transform: rotate(180deg) scale(0.75); }
+      75% { transform: rotate(380deg) scale(1.18); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    /* Light Theme Pod Styling */
+    #map-card.theme-light-active .map-overlay-interstate:not(.has-shield) .corner-pod-map-svg,
+    #map-card.theme-light-active .map-overlay-route:not(.has-shield) .corner-pod-dice-svg {
+      color: #1e293b !important;
+      stroke: #1e293b !important;
+      filter: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.95)) !important;
+    }
+
+    #map-card.theme-light-active .map-overlay-interstate:not(.has-shield):hover .corner-pod-map-svg,
+    #map-card.theme-light-active .map-overlay-route:not(.has-shield):hover .corner-pod-dice-svg {
+      color: #0f172a !important;
+      stroke: #0f172a !important;
+      transform: scale(1.15);
     }
 
     /* ------------------------------------------------------------- */
@@ -441,78 +552,28 @@
     }
 
     /* ------------------------------------------------------------- */
-    /* KINETIC FIDGET CONSOLE CORNER CONTROLS (LOWER-LEFT & RIGHT)   */
+    /* KINETIC FIDGET CONSOLE CORNER PODS (LOWER-LEFT & LOWER-RIGHT) */
     /* ------------------------------------------------------------- */
-    .fidget-corner-btn {
-      display: none;
-      position: absolute;
-      bottom: 8px;
-      z-index: 25;
-      width: 32px;
-      height: 32px;
-      background: transparent;
-      border: none;
-      color: rgba(243, 244, 246, 0.78);
-      cursor: pointer;
-      user-select: none;
-      touch-action: manipulation;
-      padding: 0;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease, filter 0.2s ease, opacity 0.25s ease;
-      outline: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .fidget-corner-btn svg {
-      width: 16px;
-      height: 16px;
-      display: block;
-      pointer-events: none;
-      filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.9)) drop-shadow(0px 0px 6px rgba(0, 0, 0, 0.65));
-      transition: transform 0.18s ease;
-    }
-
-    .fidget-map-return-btn {
-      left: 8px;
-    }
-
-    .fidget-dice-cycle-btn {
-      right: 8px;
-    }
-
-    .fidget-corner-btn:hover {
-      color: #ffffff;
-      transform: scale(1.12);
-    }
-
-    .fidget-corner-btn:active {
-      transform: scale(0.88);
-      color: #ffb703;
-    }
-
-    .fidget-corner-btn:active svg {
-      filter: drop-shadow(0 0 8px rgba(255, 183, 3, 0.95));
-    }
-
-    .fidget-corner-btn.rolling svg {
-      animation: diceRollAnim 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes diceRollAnim {
-      0% { transform: rotate(0deg) scale(1); }
-      35% { transform: rotate(180deg) scale(0.75); }
-      75% { transform: rotate(380deg) scale(1.18); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
-
-    #map-card.is-starfield-mode .fidget-corner-btn {
-      display: flex;
-    }
-
     #map-card.is-starfield-mode .map-overlay-interstate,
     #map-card.is-starfield-mode .map-overlay-route {
-      display: none !important;
+      display: flex !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    #map-card.is-starfield-mode .map-overlay-interstate:hover .corner-pod-map-svg,
+    #map-card.is-starfield-mode .map-overlay-route:hover .corner-pod-dice-svg {
+      color: #ffffff;
+      transform: scale(1.15);
+    }
+
+    #map-card.is-starfield-mode .map-overlay-interstate:active .corner-pod-map-svg,
+    #map-card.is-starfield-mode .map-overlay-route:active .corner-pod-dice-svg {
+      color: #ffb703;
+      transform: scale(0.88);
     }
 
     /* ------------------------------------------------------------- */
@@ -587,18 +648,15 @@
       width: clamp(100px, 30vw, 114px);
       height: clamp(100px, 30vw, 114px);
     }
-    #map-card.hud-scale-4 .map-overlay-heading {
-      border-radius: 28px;
-      border-width: 2.5px;
-      border-color: rgba(255, 255, 255, 0.25);
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 12px rgba(255, 255, 255, 0.08);
-      font-size: 19px;
-    }
+    #map-card.hud-scale-4 .map-overlay-heading,
     #map-card.hud-scale-4 .map-overlay-compass {
       border-radius: 28px;
       border-width: 2.5px;
-      border-color: rgba(255, 255, 255, 0.25);
+      border-color: rgba(203, 213, 225, 0.48);
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.85), inset 0 0 12px rgba(255, 255, 255, 0.08);
+    }
+    #map-card.hud-scale-4 .map-overlay-heading {
+      font-size: 19px;
     }
 
     /* TIER 5: LARGE (Original Large Quad) */
@@ -614,19 +672,17 @@
       height: clamp(118px, 36vw, 150px);
     }
     #map-card.hud-scale-5 .map-overlay-heading,
-    #map-card.hud-scale-large .map-overlay-heading {
-      border-radius: 32px;
-      border-width: 3px;
-      border-color: rgba(255, 255, 255, 0.25);
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(255, 255, 255, 0.08);
-      font-size: 26px; /* Bumped up base font size for the whole pod */
-    }
     #map-card.hud-scale-5 .map-overlay-compass,
+    #map-card.hud-scale-large .map-overlay-heading,
     #map-card.hud-scale-large .map-overlay-compass {
       border-radius: 32px;
       border-width: 3px;
-      border-color: rgba(255, 255, 255, 0.25);
+      border-color: rgba(203, 213, 225, 0.48);
       box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85), inset 0 0 14px rgba(255, 255, 255, 0.08);
+    }
+    #map-card.hud-scale-5 .map-overlay-heading,
+    #map-card.hud-scale-large .map-overlay-heading {
+      font-size: 26px; /* Bumped up base font size for the whole pod */
     }
 
     /* TIER 4 & 5 OVERRIDES FOR TELEMETRY LABEL BALANCE */
@@ -858,7 +914,8 @@
       width: 42px;
       height: 42px;
       transform-origin: center center;
-      transition: transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1), filter 0.2s ease, width 0.2s ease, height 0.2s ease;
+      transform: perspective(600px) rotateX(42deg) rotate(0deg);
+      transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), filter 0.2s ease, width 0.2s ease, height 0.2s ease;
     }
 
     .dashboard.galaga-theme .vehicle-overlay-marker {
@@ -1503,39 +1560,18 @@
         </div>
       </div>
 
-      <!-- Scalable Bottom-Left Interstate Shield Overlay -->
-      <div class="map-overlay-interstate" id="interstate-badge-container"></div>
+      <!-- Dedicated Scalable Bottom-Left Pod: Map Style Toggle / Interstate Shield -->
+      <div class="map-overlay-interstate" id="interstate-badge-container" title="Cycle Map Themes" aria-label="Cycle Map Themes"></div>
       
-      <!-- Scalable Bottom-Right State/Route Shield Overlay -->
-      <div class="map-overlay-route" id="route-badge-container"></div>
+      <!-- Dedicated Scalable Bottom-Right Pod: Fidget Consoles / State Route Shield -->
+      <div class="map-overlay-route" id="route-badge-container" title="Cycle Fidget Consoles" aria-label="Cycle Fidget Consoles"></div>
 
-      <!-- Dedicated Independent Vehicle Overlay Marker (Chevron Map Theme Toggle) -->
-      <div class="vehicle-overlay-marker mode-heading-up" id="vehicle-overlay" title="Toggle Map Themes">
+      <!-- Dedicated Independent Vehicle Overlay Marker (Dixie Horn / Galaga Laser) -->
+      <div class="vehicle-overlay-marker mode-heading-up" id="vehicle-overlay" title="Dixie Horn / Galaga Laser">
         <svg id="vehicle-overlay-svg" viewBox="0 0 24 24" fill="#007aff" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.6));">
           <polygon points="12 2 19 21 12 17 5 21 12 2"/>
         </svg>
       </div>
-
-      <!-- Fidget Mode: Far Lower-Left Return-to-Map Button -->
-      <button class="fidget-corner-btn fidget-map-return-btn" id="fidget-map-return-btn" title="Return to Live Map" aria-label="Return to Live Map">
-        <svg viewBox="0 0 24 24" fill="rgba(0, 0, 0, 0.4)" stroke="currentColor" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-          <line x1="8" y1="2" x2="8" y2="18"/>
-          <line x1="16" y1="6" x2="16" y2="22"/>
-        </svg>
-      </button>
-
-      <!-- Fidget Mode: Far Lower-Right Die / Fidget Cycle Button -->
-      <button class="fidget-corner-btn fidget-dice-cycle-btn" id="fidget-dice-cycle-btn" title="Cycle Fidget Consoles" aria-label="Cycle Fidget Consoles">
-        <svg class="fidget-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <rect x="2.5" y="2.5" width="19" height="19" rx="4.5" ry="4.5" fill="rgba(0, 0, 0, 0.4)" stroke="currentColor" stroke-width="1.8"/>
-          <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
-          <circle cx="16.8" cy="7.2" r="1.4" fill="currentColor"/>
-          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-          <circle cx="7.2" cy="16.8" r="1.4" fill="currentColor"/>
-          <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
-        </svg>
-      </button>
 
       <!-- Ephemeral Map Theme Name Toast (Center Bottom) -->
       <div class="map-theme-toast" id="map-theme-toast">Natural Dark Navigation</div>
@@ -2044,18 +2080,6 @@
     let keepAliveOscillator = null;
     let keepAliveGain = null;
 
-    async function routeAudioToSpeakerIfSupported(ctx) {
-      try {
-        if (ctx && typeof ctx.setSinkId === 'function' && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const speaker = devices.find(d => d.kind === 'audiooutput' && (d.label.toLowerCase().includes('speaker') || d.label.toLowerCase().includes('phone') || d.label.toLowerCase().includes('built-in')));
-          if (speaker && speaker.deviceId) {
-            await ctx.setSinkId(speaker.deviceId);
-          }
-        }
-      } catch (e) {}
-    }
-
     function startAudioKeepAlive(ctx) {
       try {
         if (!ctx || keepAliveOscillator) return;
@@ -2074,7 +2098,6 @@
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        routeAudioToSpeakerIfSupported(audioCtx);
       }
       if (audioCtx.state === 'suspended') {
         audioCtx.resume().catch(() => {});
@@ -2292,6 +2315,7 @@
           hudBannerTimeout = setTimeout(renderTelemetryBadge, 1300);
         }
       }
+      updateCompassAndVehicleOrientation(currentHeading);
     }
 
     function createInterstateSVG(num, direction = '') {
@@ -2311,7 +2335,7 @@
 
       return `
         <div class="highway-shield-badge">
-          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85)); overflow: visible;">
+          <svg viewBox="0 0 100 100" style="overflow: visible;">
             <path d="M 50,4 C 65,4 88,14 96,18 C 96,55 82,82 50,96 C 18,82 4,55 4,18 C 12,14 35,4 50,4 Z" fill="#ffffff" stroke="#ffffff" stroke-width="2.5" />
             <path d="M 50,7 C 64,7 86,16 93,20 C 93,28 93,32 93,32 L 7,32 C 7,32 7,28 7,20 C 14,16 36,7 50,7 Z" fill="#cc0000" />
             <path d="M 7,32 L 93,32 C 93,54 80,80 50,93 C 20,80 7,54 7,32 Z" fill="#0033cc" />
@@ -2357,7 +2381,7 @@
 
       return `
         <div class="highway-shield-badge">
-          <svg viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85)); overflow: visible;">
+          <svg viewBox="0 0 100 100" style="overflow: visible;">
             <!-- Outer Solid White Plate with Rounded Corners & Deep Black Border -->
             <rect x="2.5" y="2.5" width="95" height="95" rx="14" ry="14" fill="#ffffff" stroke="#000000" stroke-width="4.5" />
             <!-- Authentic MUTCD Inset Hairline Margin -->
@@ -2375,16 +2399,55 @@
     let dualRouteFlipIndex = 0;
     let dualRouteFlipInterval = null;
 
+    function getMapIconHTML() {
+      return `
+        <div class="corner-pod-content map-pod-content">
+          <svg class="corner-pod-map-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" fill="rgba(0,0,0,0.3)"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+        </div>
+      `;
+    }
+
+    function getDieIconHTML() {
+      return `
+        <div class="corner-pod-content die-pod-content">
+          <svg class="corner-pod-dice-svg" id="corner-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2.5" y="2.5" width="19" height="19" rx="4.5" ry="4.5" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
+            <circle cx="16.8" cy="7.2" r="1.4" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+            <circle cx="7.2" cy="16.8" r="1.4" fill="currentColor"/>
+            <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
+          </svg>
+        </div>
+      `;
+    }
+
+    function isFidgetActive() {
+      if (typeof mapThemes !== 'undefined' && mapThemes[currentThemeIndex]) {
+        return mapThemes[currentThemeIndex].type === 'kinetic-starfield';
+      }
+      return false;
+    }
+
     function renderRouteBadges() {
       const interstateContainer = document.getElementById('interstate-badge-container');
       const routeContainer = document.getElementById('route-badge-container');
+      const inFidget = isFidgetActive();
 
       if (interstateContainer) {
-        if (currentInterstateShield) {
+        if (!inFidget && currentInterstateShield) {
           const dir = getHighwayDirection(currentInterstateShield, currentHeading);
           interstateContainer.innerHTML = createInterstateSVG(currentInterstateShield, dir);
+          interstateContainer.classList.add('has-shield');
+          interstateContainer.setAttribute('title', `Interstate ${currentInterstateShield} (Tap to cycle map styles)`);
         } else {
-          interstateContainer.innerHTML = '';
+          interstateContainer.innerHTML = getMapIconHTML();
+          interstateContainer.classList.remove('has-shield');
+          interstateContainer.setAttribute('title', 'Cycle Map Themes');
         }
       }
 
@@ -2394,11 +2457,15 @@
           activeShield = dualRouteFlipIndex === 0 ? currentRouteShield : currentSecondaryRouteShield;
         }
 
-        if (activeShield) {
+        if (!inFidget && activeShield) {
           const dir = getHighwayDirection(activeShield, currentHeading);
           routeContainer.innerHTML = createRouteSVG(activeShield, dir);
+          routeContainer.classList.add('has-shield');
+          routeContainer.setAttribute('title', `Route ${activeShield} (Tap to cycle fidget consoles)`);
         } else {
-          routeContainer.innerHTML = '';
+          routeContainer.innerHTML = getDieIconHTML();
+          routeContainer.classList.remove('has-shield');
+          routeContainer.setAttribute('title', 'Cycle Fidget Consoles');
         }
       }
     }
@@ -2413,6 +2480,7 @@
       }, 4000);
     }
     startDualRouteFlipper();
+    renderRouteBadges();
 
     function getCardinalRoadDirection(heading) {
       if (heading === null || isNaN(heading)) return '';
@@ -3063,61 +3131,60 @@
       });
 
       const vehicleMarker = document.getElementById('vehicle-overlay');
-      let vehiclePressTimer, isVehicleLongPress = false, isVehicleTouchHandled = false;
+      let isVehicleTouchHandled = false;
       vehicleMarker.addEventListener('contextmenu', (e) => e.preventDefault());
 
-      vehicleMarker.addEventListener('touchstart', () => {
+      vehicleMarker.addEventListener('touchstart', (e) => {
         isVehicleTouchHandled = true;
-        isVehicleLongPress = false;
-        vehiclePressTimer = setTimeout(() => {
-          isVehicleLongPress = true;
-          if (isGalagaMode) playGalagaLaser();
-          else playDixieHorn();
-        }, 500);
+        if (isGalagaMode) playGalagaLaser();
+        else playDixieHorn();
       }, { passive: true });
 
-      vehicleMarker.addEventListener('touchmove', () => clearTimeout(vehiclePressTimer));
-      vehicleMarker.addEventListener('touchend', (e) => {
-        clearTimeout(vehiclePressTimer);
-        if (!isVehicleLongPress) toggleMapStyle(e);
+      vehicleMarker.addEventListener('touchend', () => {
         setTimeout(() => { isVehicleTouchHandled = false; }, 350);
       });
 
-      vehicleMarker.addEventListener('mousedown', () => {
+      vehicleMarker.addEventListener('click', (e) => {
         if (isVehicleTouchHandled) return;
-        isVehicleLongPress = false;
-        vehiclePressTimer = setTimeout(() => {
-          isVehicleLongPress = true;
-          if (isGalagaMode) playGalagaLaser();
-          else playDixieHorn();
-        }, 500);
-      });
-      vehicleMarker.addEventListener('mouseleave', () => clearTimeout(vehiclePressTimer));
-      vehicleMarker.addEventListener('mouseup', (e) => {
-        if (isVehicleTouchHandled) return;
-        clearTimeout(vehiclePressTimer);
-        if (!isVehicleLongPress) toggleMapStyle(e);
+        if (isGalagaMode) playGalagaLaser();
+        else playDixieHorn();
       });
 
-      // Fidget Mode: Far Lower-Left Return-to-Map button
-      const fidgetMapReturnBtn = document.getElementById('fidget-map-return-btn');
-      if (fidgetMapReturnBtn) {
-        fidgetMapReturnBtn.addEventListener('click', (e) => {
-          returnToMapFromFidget(e);
+      // Dedicated Lower-Left Corner Pod (Map Themes Cycle & Interstate Shield)
+      const interstateCornerPod = document.getElementById('interstate-badge-container');
+      let isMapCornerTouchHandled = false;
+      if (interstateCornerPod) {
+        interstateCornerPod.addEventListener('touchstart', () => {
+          isMapCornerTouchHandled = true;
+        }, { passive: true });
+        interstateCornerPod.addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          if (e.cancelable) e.preventDefault();
+          handleMapCornerClick(e);
+          setTimeout(() => { isMapCornerTouchHandled = false; }, 350);
         });
-        fidgetMapReturnBtn.addEventListener('touchend', (e) => {
-          returnToMapFromFidget(e);
+        interstateCornerPod.addEventListener('click', (e) => {
+          if (isMapCornerTouchHandled) return;
+          handleMapCornerClick(e);
         });
       }
 
-      // Fidget Mode: Far Lower-Right Die / Fidget Cycle button
-      const fidgetDiceCycleBtn = document.getElementById('fidget-dice-cycle-btn');
-      if (fidgetDiceCycleBtn) {
-        fidgetDiceCycleBtn.addEventListener('click', (e) => {
-          cycleFidgetThemes(e);
+      // Dedicated Lower-Right Corner Pod (Fidget Consoles Cycle & Route Shield)
+      const routeCornerPod = document.getElementById('route-badge-container');
+      let isFidgetCornerTouchHandled = false;
+      if (routeCornerPod) {
+        routeCornerPod.addEventListener('touchstart', () => {
+          isFidgetCornerTouchHandled = true;
+        }, { passive: true });
+        routeCornerPod.addEventListener('touchend', (e) => {
+          e.stopPropagation();
+          if (e.cancelable) e.preventDefault();
+          handleFidgetCornerClick(e);
+          setTimeout(() => { isFidgetCornerTouchHandled = false; }, 350);
         });
-        fidgetDiceCycleBtn.addEventListener('touchend', (e) => {
-          cycleFidgetThemes(e);
+        routeCornerPod.addEventListener('click', (e) => {
+          if (isFidgetCornerTouchHandled) return;
+          handleFidgetCornerClick(e);
         });
       }
 
@@ -3125,8 +3192,8 @@
       const mapContainerEl = document.getElementById('map-card');
       if (mapContainerEl) {
         mapContainerEl.addEventListener('click', (e) => {
-          // Avoid triggering on overlay buttons or vehicle
-          if (e.target.closest('#vehicle-overlay') || e.target.closest('#fidget-map-return-btn') || e.target.closest('#fidget-dice-cycle-btn') || e.target.closest('.hud-badge-floating')) return;
+          // Avoid triggering on overlay buttons, corner pods, or vehicle marker
+          if (e.target.closest('#vehicle-overlay') || e.target.closest('#interstate-badge-container') || e.target.closest('#route-badge-container') || e.target.closest('.hud-badge-floating')) return;
           handleMapMultiTap(e);
         });
       }
@@ -3162,15 +3229,20 @@
       
       if (cameraPerspectiveMode === 'north-up') {
         if (needleEl) needleEl.style.transform = 'rotate(0deg)';
-        if (vehicleSvg) vehicleSvg.style.transform = `rotate(${h}deg)`;
-      } else {
+        if (vehicleSvg) vehicleSvg.style.transform = `perspective(600px) rotateX(0deg) rotate(${h}deg)`;
+      } else if (cameraPerspectiveMode === 'overview') {
         if (needleEl) needleEl.style.transform = `rotate(${-h}deg)`;
-        if (vehicleSvg) vehicleSvg.style.transform = 'rotate(0deg)';
+        if (vehicleSvg) vehicleSvg.style.transform = 'perspective(600px) rotateX(0deg) rotate(0deg)';
+      } else {
+        // 'perspective' (3D Perspective Drive with 58° pitch)
+        if (needleEl) needleEl.style.transform = `rotate(${-h}deg)`;
+        if (vehicleSvg) vehicleSvg.style.transform = 'perspective(600px) rotateX(42deg) rotate(0deg)';
       }
     }
 
     // Split Navigation & Kinetic Console Theme Engine
     let lastRealMapIndex = (currentThemeIndex < 2) ? currentThemeIndex : 0;
+    let lastFidgetIndex = (currentThemeIndex >= 2) ? currentThemeIndex : 2;
 
     function isFidgetTheme(idx) {
       return mapThemes[idx] && mapThemes[idx].type === 'kinetic-starfield';
@@ -3199,6 +3271,8 @@
       const theme = mapThemes[currentThemeIndex];
       if (theme.type !== 'kinetic-starfield') {
         lastRealMapIndex = currentThemeIndex;
+      } else {
+        lastFidgetIndex = currentThemeIndex;
       }
       
       try {
@@ -3235,6 +3309,9 @@
         if (mapCard) mapCard.classList.add('is-starfield-mode');
         if (mapEl) mapEl.style.display = 'none';
         if (window.KineticConsole) {
+          if (!window.KineticConsole.canvas && mapCard) {
+            window.KineticConsole.init(mapCard);
+          }
           if (theme.subMode) {
             window.KineticConsole.setMode(theme.subMode);
           }
@@ -3276,57 +3353,83 @@
         if (theme.darkSign) speedSignBox.classList.add('dark-mode-sign');
         else speedSignBox.classList.remove('dark-mode-sign');
       }
+
+      // Re-evaluate corner pods for current mode & badges
+      renderRouteBadges();
     }
 
-    // 1. Vehicle Chevron Marker: Cycles sequentially through map styles and then into sensory consoles
-    async function cycleMapFromChevron(event) {
-      if (event) event.stopPropagation();
-      const nextIdx = (currentThemeIndex + 1) % mapThemes.length;
-      await applyThemeByIndex(nextIdx, true);
-    }
-
-    // 2. Far Lower-Left Map Icon: Instantly escapes/returns to the first map navigation theme (index 0)
-    async function returnToMapFromFidget(event) {
+    // 1. Lower-Left Corner Pod: DEDICATED to cycling Map navigation themes (or returning directly from fidget mode)
+    async function handleMapCornerClick(event) {
       if (event) {
         event.stopPropagation();
         if (event.cancelable) event.preventDefault();
       }
+
+      if (navigator.vibrate) {
+        try { navigator.vibrate(15); } catch(e) {}
+      }
+
       const realMaps = getRealMapIndices();
-      // Reset to beginning of map theme list (index 0) so chevron cycles through all map themes in order
-      const targetMapIdx = realMaps.length > 0 ? realMaps[0] : 0;
-      await applyThemeByIndex(targetMapIdx, true);
+      if (realMaps.length === 0) return;
+
+      if (isFidgetActive()) {
+        const targetMapIdx = (lastRealMapIndex >= 0 && realMaps.includes(lastRealMapIndex)) ? lastRealMapIndex : realMaps[0];
+        await applyThemeByIndex(targetMapIdx, true);
+      } else {
+        let curPos = realMaps.indexOf(currentThemeIndex);
+        if (curPos === -1) curPos = 0;
+        const nextMapIdx = realMaps[(curPos + 1) % realMaps.length];
+        await applyThemeByIndex(nextMapIdx, true);
+      }
     }
 
-    // 3. Far Lower-Right Die Icon: Cycles exclusively through kinetic fidget consoles
-    async function cycleFidgetThemes(event) {
+    // 2. Lower-Right Corner Pod: DEDICATED to cycling Kinetic Fidget consoles (or entering fidget mode from map)
+    async function handleFidgetCornerClick(event) {
       if (event) {
         event.stopPropagation();
         if (event.cancelable) event.preventDefault();
       }
 
-      // Play tactile dice tumble animation
-      const diceBtn = document.getElementById('fidget-dice-cycle-btn');
-      if (diceBtn) {
-        diceBtn.classList.remove('rolling');
-        void diceBtn.offsetWidth; // Force DOM reflow to restart CSS keyframe animation
-        diceBtn.classList.add('rolling');
+      const diceSvg = document.getElementById('corner-dice-svg');
+      if (diceSvg) {
+        diceSvg.classList.remove('rolling');
+        void diceSvg.offsetWidth;
+        diceSvg.classList.add('rolling');
       }
 
-      // Micro-haptic feedback if supported
       if (navigator.vibrate) {
         try { navigator.vibrate([15, 25, 15]); } catch(e) {}
       }
 
       const fidgets = getFidgetIndices();
-      let curPos = fidgets.indexOf(currentThemeIndex);
-      if (curPos === -1) curPos = 0;
-      const nextFidgetIdx = fidgets[(curPos + 1) % fidgets.length];
-      await applyThemeByIndex(nextFidgetIdx, true);
+      if (fidgets.length === 0) return;
+
+      if (!isFidgetActive()) {
+        const targetFidgetIdx = (lastFidgetIndex >= 0 && fidgets.includes(lastFidgetIndex)) ? lastFidgetIndex : fidgets[0];
+        await applyThemeByIndex(targetFidgetIdx, true);
+      } else {
+        let curPos = fidgets.indexOf(currentThemeIndex);
+        if (curPos === -1) curPos = 0;
+        const nextFidgetIdx = fidgets[(curPos + 1) % fidgets.length];
+        await applyThemeByIndex(nextFidgetIdx, true);
+      }
     }
 
-    // Backward-compatible alias
+    // Backward-compatible aliases
+    async function cycleMapFromChevron(event) {
+      await handleMapCornerClick(event);
+    }
+
+    async function returnToMapFromFidget(event) {
+      await handleMapCornerClick(event);
+    }
+
+    async function cycleFidgetThemes(event) {
+      await handleFidgetCornerClick(event);
+    }
+
     async function toggleMapStyle(event) {
-      await cycleMapFromChevron(event);
+      await handleMapCornerClick(event);
     }
 
     function syncMapPadding() {
@@ -3506,6 +3609,8 @@
           compassBtn.classList.remove('compass-light-map');
         }
       }
+
+      updateCompassAndVehicleOrientation(currentHeading);
 
       try {
         const styleObj = await getMapStyleObject(initialTheme);

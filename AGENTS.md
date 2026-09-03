@@ -10,32 +10,38 @@
 
 ## Active Evening Projects & Roadmap Registry
 
-### Project 1: Navigation Vector Maps & Street Typography [COMPLETED]
+### Step 3: Vehicle Chevron & Galaga Fighter 3D Perspective Tilt [COMPLETED]
 - **Status**: Completed & Verified.
 - **Achievements**:
-  - OpenFreeMap vector style rendering with strict zero-error layer validation.
-  - Large, high-visibility street names (`text-size` up to 17–20pt with 2.5px bold contrast halos).
-  - Clean daylight (crisp white pavement, sky-blue water, spring mint parks) and midnight dark (deep charcoal pavement, luminous cyan waterways, pine emerald green).
+  - Pitch alignment in 3D Perspective Mode: Applied complementary 3D CSS transform (`perspective(600px) rotateX(42deg) rotate(...)`) to the center vehicle Chevron and Galaga fighter so they lie along the plane of the angled road (pitch: 58°).
+  - Flat alignment in 2D Mode: Smooth reset to flat overhead rendering (`perspective(600px) rotateX(0deg)`) in 2D Overview Track and North-Up modes.
+  - Seamless 0.35s cubic-bezier transform animation when transitioning camera modes or toggling Galaga fighter mode.
 
-### Project 2: Savannah Wildlife Console (Animal Direction & Scale) [COMPLETED]
+### Step 4: Vehicle Horn Audio (Chevron Horn & Galaga Laser) [COMPLETED]
 - **Status**: Completed & Verified.
 - **Achievements**:
-  - Inverted Z-axis so wildlife runs away from the vehicle towards the vanishing horizon rim.
-  - Enlarged scale (~35% larger) and added anatomical silhouettes (shaggy coats, branching elk racks, curl horns, markings, forked tongues).
-  - Staggered queue pool: 2–3 active animals at once, smoothly respawning new random species from the full 7-animal roster.
+  - Restored clean, standard Web Audio routing with zero echo or duplicate triggers.
+  - Kept hardware A2DP link pre-warming and sub-audible keep-alive for zero-latency Bluetooth/system audio responsiveness.
+  - Placed experimental silent-switch speaker redirection on future wishlist to ensure 100% stable single-trigger playback.
 
-### Project 3: Synthomatic Circuit Board Sensor Coupling [COMPLETED]
-- **Status**: Completed & Verified.
+### Step 5: Synthomatic Console Redesign (Square Ratio & Declutter) [IN-PROGRESS / TESTING]
+- **Status**: Implemented & Ready for User Testing.
 - **Achievements**:
-  - Multi-layer physical parallax depth engine: Substrate (Z = -0.35), Copper traces & Solder vias (Z = 0.0), SMT Hardware ICs (Z = +0.55), and Floating Cyber Orbit HUD Bezel (Z = +1.15).
-  - Sensor coupling with device accelerometer/gyroscope tilt (`deviceorientation` gamma roll & beta pitch, `devicemotion` gravity) and desktop mouse/touch hover tilt.
-  - Realistic metallic specular glint on 36 gold-plated annular through-hole solder vias shifting dynamically with light reflection angles.
-  - SMT hardware package models: Central QFP-32 DSP chip (`SYNTH-DSP 8800`), SOIC-8 EEPROM, brushed aluminum quartz oscillator (16 MHz), DPAK regulator, choke coil, bulk capacitor, and 0805 passives with drop shadows.
-  - GPS speed and acceleration current pulses: conductive packets accelerate along 45° traces, surging during acceleration and dissipating reverse energy into bulk reservoir during regenerative braking.
+  - **1:1 Square Aspect Ratio**: Re-anchored the Synthomatic PCB canvas and coordinate space to `Math.min(w, h) * 0.90` so the board stays a crisp, non-distorted square centered inside the map viewport.
+  - **Clean 3-Component Layout**: Stripped micro-component clutter down to the central hero `SYNTH-DSP 8800` chip flanked by 2 iconic secondary components: the `16.000 MHz` brushed aluminum Quartz Crystal Oscillator and the `24C512` SOIC-8 Sound ROM.
+  - **Streamlined Geometric Buses**: Cleaned up erratic wiring into 8 balanced, 45-degree chamfered gold/copper/cyan traces connecting the central DSP to the crystal clock, ROM bus, and stereo audio DAC outputs.
+  - **Precision Mounting Pads**: Replaced cluttered test points with 4 corner gold annular mounting pads with metallic specular glints and central drill holes.
+  - **Smooth Kinetic Flow**: Replaced 22 random points with 8 rhythmic glowing data packets pulsing down active hero traces, with central DSP energy discharge upon regenerative braking.
 
-### Project 4: Cracker Jack Tilt Maze Fidget Console [NEXT - STEP 4]
+### Step 6: Die Long-Press Auto-Cycling (Fidget Screen Saver)
 - **Status**: Queued.
 - **Goals**:
-  - Vintage pocket prize labyrinth with physics-driven chrome ball bearing.
-  - Responsive device orientation / gyro tilt rolling with haptic wall feedback.
-  - Added to kinetic console fidget cycle.
+  - Long-press activation: 750ms long-press on Die button enters Auto-Cycle mode.
+  - Timed rotation: Rotates to next kinetic fidget console every 2 minutes.
+  - Dismiss / Stop: Long-press freezes; tapping lower-left Map button returns immediately to navigation.
+
+### Step 7: Map Feature Legend & POI Essential Services Filter in features.html
+- **Status**: Queued.
+- **Goals**:
+  - Map Feature Legend in features.html: Color-coded reference for waterways, parks/forests, building footprints, road hierarchy, and POI icons.
+  - Essential Highway Services POI Filter: Tile style filter to optionally hide non-essential commercial POIs while retaining gas stations, coffee, and rest stops.
