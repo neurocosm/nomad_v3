@@ -34,11 +34,15 @@
   - **Smooth Kinetic Flow**: Replaced 22 random points with 8 rhythmic glowing data packets pulsing down active hero traces, with central DSP energy discharge upon regenerative braking.
 
 ### Step 6: Die Long-Press Auto-Cycling (Fidget Screen Saver)
-- **Status**: Queued.
-- **Goals**:
-  - Long-press activation: 750ms long-press on Die button enters Auto-Cycle mode.
-  - Timed rotation: Rotates to next kinetic fidget console every 2 minutes.
-  - Dismiss / Stop: Long-press freezes; tapping lower-left Map button returns immediately to navigation.
+- **Status**: Implemented & Ready for User Testing.
+- **Achievements**:
+  - **Long-Press Activation**: 700ms long-press on the lower-right `#route-badge-container` Die button toggles Auto-Cycle screen saver mode.
+  - **Spinning Die Indicator (Every 2 Seconds)**: Replaced static/breathing glow with a crisp 360-degree snap spin every 2 seconds (`@keyframes diceSpinEvery2s`) on the die icon to indicate active Auto-Cycle mode.
+  - **HUD Integration**: Integrated directly into `renderRouteBadges()` so periodic route flippers and GPS location updates never strip away the auto-cycling indicator or die icon.
+  - **Timed 2-Minute Rotation**: Rotates to the next kinetic fidget console every 2 minutes.
+  - **Manual Skip with Timer Reset**: Short-tapping the Die advances to the next fidget console immediately and restarts the 2-minute timer for the chosen console.
+  - **Route Badge Zero-Spin Guarantee**: Route shields, state highway badges, and interstate shields are strictly locked against spinning or animation (`animation: none !important`). Only the Die icon during active fidget console screensaver mode can spin every 2 seconds.
+  - **Instant Dismissal**: Long-pressing the Die pauses Auto-Cycle; tapping the lower-left Map button instantly halts Auto-Cycle and returns to navigation.
 
 ### Step 7: Map Feature Legend & POI Essential Services Filter in features.html
 - **Status**: Queued.

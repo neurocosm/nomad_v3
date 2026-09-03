@@ -420,22 +420,36 @@
       animation: diceRollAnim 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* Auto-Cycling Screensaver Active Pulse - Glowing Amber Breathing */
-    @keyframes diceAutoPulse {
-      0%   { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255, 183, 3, 0.6)); }
-      50%  { transform: scale(1.18); filter: drop-shadow(0 0 14px rgba(255, 183, 3, 1.0)) drop-shadow(0 0 22px rgba(251, 133, 0, 0.8)); color: #ffb703; }
-      100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255, 183, 3, 0.6)); }
+    /* Auto-Cycling Screensaver - Spins Die crisp 360 degrees every 2 seconds (ONLY Die icon, NEVER Route Shield) */
+    @keyframes diceSpinEvery2s {
+      0%   { transform: rotate(0deg) scale(1); }
+      25%  { transform: rotate(360deg) scale(1.12); }
+      35%  { transform: rotate(360deg) scale(1); }
+      100% { transform: rotate(360deg) scale(1); }
     }
 
-    .corner-pod-dice-svg.auto-cycling,
-    .map-overlay-route.auto-cycling .corner-pod-dice-svg {
-      animation: diceAutoPulse 1.6s infinite ease-in-out !important;
+    .map-overlay-route:not(.has-shield).auto-cycling .corner-pod-dice-svg,
+    .map-overlay-route:not(.has-shield) .corner-pod-dice-svg.auto-spinning {
+      animation: diceSpinEvery2s 2s infinite cubic-bezier(0.34, 1.56, 0.64, 1) !important;
       color: #ffb703 !important;
     }
 
-    .map-overlay-route.auto-cycling {
-      box-shadow: 0 0 16px rgba(255, 183, 3, 0.75), inset 0 0 10px rgba(255, 183, 3, 0.3) !important;
+    .map-overlay-route:not(.has-shield).auto-cycling {
+      border-color: rgba(255, 183, 3, 0.65) !important;
       border-radius: 14px;
+    }
+
+    /* CRITICAL GUARD: Highway/Route shields & interstate badges MUST NEVER spin or animate */
+    .has-shield,
+    .has-shield *,
+    .highway-shield-badge,
+    .highway-shield-badge *,
+    .map-overlay-route.has-shield,
+    .map-overlay-route.has-shield *,
+    .map-overlay-interstate.has-shield,
+    .map-overlay-interstate.has-shield * {
+      animation: none !important;
+      -webkit-animation: none !important;
     }
 
     @keyframes diceRollAnim {
@@ -2411,10 +2425,15 @@
       `;
     }
 
+    let isAutoCyclingFidgets = false;
+    let autoCycleTimer = null;
+    const AUTO_CYCLE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
     function getDieIconHTML() {
+      const spinningClass = (isAutoCyclingFidgets && isFidgetActive()) ? ' auto-spinning' : '';
       return `
         <div class="corner-pod-content die-pod-content">
-          <svg class="corner-pod-dice-svg" id="corner-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="corner-pod-dice-svg${spinningClass}" id="corner-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <rect x="2.5" y="2.5" width="19" height="19" rx="4.5" ry="4.5" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1.8"/>
             <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
             <circle cx="16.8" cy="7.2" r="1.4" fill="currentColor"/>
@@ -2461,12 +2480,63 @@
           const dir = getHighwayDirection(activeShield, currentHeading);
           routeContainer.innerHTML = createRouteSVG(activeShield, dir);
           routeContainer.classList.add('has-shield');
+          routeContainer.classList.remove('auto-cycling');
           routeContainer.setAttribute('title', `Route ${activeShield} (Tap to cycle fidget consoles)`);
         } else {
           routeContainer.innerHTML = getDieIconHTML();
           routeContainer.classList.remove('has-shield');
-          routeContainer.setAttribute('title', 'Cycle Fidget Consoles');
+          if (isAutoCyclingFidgets && inFidget) {
+            routeContainer.classList.add('auto-cycling');
+            routeContainer.setAttribute('title', 'Auto-Cycle Active (Spins every 2s) - Long-Press to Stop');
+          } else {
+            routeContainer.classList.remove('auto-cycling');
+            routeContainer.setAttribute('title', 'Cycle Fidget Consoles (Long-Press: Auto-Cycle)');
+          }
         }
+      }
+    }
+
+    async function rotateNextAutoFidget() {
+      if (!isAutoCyclingFidgets) return;
+      const fidgets = getFidgetIndices();
+      if (fidgets.length === 0) return;
+      let curPos = fidgets.indexOf(currentThemeIndex);
+      if (curPos === -1) curPos = 0;
+      const nextFidgetIdx = fidgets[(curPos + 1) % fidgets.length];
+
+      await applyThemeByIndex(nextFidgetIdx, true);
+      showMapThemeToast({ name: `[AUTO] ${mapThemes[nextFidgetIdx].name}`, type: 'kinetic-starfield' });
+    }
+
+    async function toggleAutoCycleFidgets(forceState) {
+      const nextState = typeof forceState === 'boolean' ? forceState : !isAutoCyclingFidgets;
+      isAutoCyclingFidgets = nextState;
+
+      if (autoCycleTimer) {
+        clearInterval(autoCycleTimer);
+        autoCycleTimer = null;
+      }
+
+      if (isAutoCyclingFidgets) {
+        if (typeof playFidgetAudio === 'function') playFidgetAudio();
+        if (navigator.vibrate) {
+          try { navigator.vibrate([40, 60, 80]); } catch (_) {}
+        }
+        if (!isFidgetActive()) {
+          const synthIdx = mapThemes.findIndex(t => t.id === 'kinetic-synthomatic');
+          const targetIdx = synthIdx !== -1 ? synthIdx : getFidgetIndices()[0];
+          await applyThemeByIndex(targetIdx, true);
+        }
+        renderRouteBadges();
+        showMapThemeToast({ name: 'AUTO-CYCLE ON (Spins every 2s)', type: 'kinetic-starfield' });
+        autoCycleTimer = setInterval(rotateNextAutoFidget, AUTO_CYCLE_INTERVAL_MS);
+      } else {
+        if (typeof playFidgetAudio === 'function') playFidgetAudio();
+        if (navigator.vibrate) {
+          try { navigator.vibrate(50); } catch (_) {}
+        }
+        renderRouteBadges();
+        showMapThemeToast({ name: 'AUTO-CYCLE OFF (Paused)', type: 'kinetic-starfield' });
       }
     }
 
@@ -3170,21 +3240,94 @@
       }
 
       // Dedicated Lower-Right Corner Pod (Fidget Consoles Cycle & Route Shield)
+      // Tap: manual single cycle through fidget consoles
+      // Long-press (700ms): toggles Auto-Cycle screen saver mode
       const routeCornerPod = document.getElementById('route-badge-container');
-      let isFidgetCornerTouchHandled = false;
       if (routeCornerPod) {
-        routeCornerPod.addEventListener('touchstart', () => {
-          isFidgetCornerTouchHandled = true;
+        let pressTimer = null;
+        let isLongPressTriggered = false;
+        let startX = 0;
+        let startY = 0;
+
+        const onPointerDown = (x, y) => {
+          isLongPressTriggered = false;
+          startX = x;
+          startY = y;
+          if (pressTimer) clearTimeout(pressTimer);
+          pressTimer = setTimeout(() => {
+            isLongPressTriggered = true;
+            toggleAutoCycleFidgets();
+          }, 700);
+        };
+
+        const onPointerMove = (x, y) => {
+          if (pressTimer) {
+            const dist = Math.hypot(x - startX, y - startY);
+            if (dist > 14) {
+              clearTimeout(pressTimer);
+              pressTimer = null;
+            }
+          }
+        };
+
+        const onPointerUp = () => {
+          const triggered = isLongPressTriggered;
+          if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+          return triggered;
+        };
+
+        routeCornerPod.addEventListener('touchstart', (e) => {
+          if (e.touches && e.touches[0]) {
+            onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+          }
         }, { passive: true });
+
+        routeCornerPod.addEventListener('touchmove', (e) => {
+          if (e.touches && e.touches[0]) {
+            onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: true });
+
         routeCornerPod.addEventListener('touchend', (e) => {
           e.stopPropagation();
+          const wasLong = onPointerUp();
+          if (wasLong) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
           if (e.cancelable) e.preventDefault();
           handleFidgetCornerClick(e);
-          setTimeout(() => { isFidgetCornerTouchHandled = false; }, 350);
         });
-        routeCornerPod.addEventListener('click', (e) => {
-          if (isFidgetCornerTouchHandled) return;
+
+        routeCornerPod.addEventListener('touchcancel', () => {
+          onPointerUp();
+        });
+
+        routeCornerPod.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          onPointerDown(e.clientX, e.clientY);
+        });
+
+        routeCornerPod.addEventListener('mousemove', (e) => {
+          onPointerMove(e.clientX, e.clientY);
+        });
+
+        routeCornerPod.addEventListener('mouseup', (e) => {
+          if (e.button !== 0) return;
+          const wasLong = onPointerUp();
+          if (wasLong) {
+            e.stopPropagation();
+            return;
+          }
           handleFidgetCornerClick(e);
+        });
+
+        routeCornerPod.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
         });
       }
 
@@ -3373,6 +3516,9 @@
       if (realMaps.length === 0) return;
 
       if (isFidgetActive()) {
+        if (isAutoCyclingFidgets) {
+          toggleAutoCycleFidgets(false);
+        }
         const targetMapIdx = (lastRealMapIndex >= 0 && realMaps.includes(lastRealMapIndex)) ? lastRealMapIndex : realMaps[0];
         await applyThemeByIndex(targetMapIdx, true);
       } else {
@@ -3399,6 +3545,12 @@
 
       if (navigator.vibrate) {
         try { navigator.vibrate([15, 25, 15]); } catch(e) {}
+      }
+
+      // If auto-cycling is active, reset the 2-minute timer for the newly chosen console
+      if (isAutoCyclingFidgets && autoCycleTimer) {
+        clearInterval(autoCycleTimer);
+        autoCycleTimer = setInterval(rotateNextAutoFidget, AUTO_CYCLE_INTERVAL_MS);
       }
 
       const fidgets = getFidgetIndices();
