@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v10-08312026-fix';
+const CACHE_NAME = 'nomad-roadtrip-v11-09032026-safe-icon';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -17,6 +17,8 @@ const ASSETS_TO_CACHE = [
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
   'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css',
   'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js'
 ];

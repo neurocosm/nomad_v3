@@ -5,6 +5,7 @@
 2. **Never Stack Unverified Edits**: Always validate vector map layers, styles, and kinetic engine canvases against strict runtime specifications.
 3. **Triple-Check Work**: Verify styles for missing or mismatched paint properties (e.g. `fill-color` on lines, `line-color` on symbols, `background-color` on rasters) before deploying.
 4. **Preserve PWA & Navigation Foundations**: Core HUD navigation, speed signs, compass, and vector map viewports must always remain responsive and functional.
+5. **Version Registry Timezone Rule (US Eastern Time / ET)**: When updating `NOMAD_VERSION` in `version.js`, the timestamp MUST strictly reflect US Eastern Time (ET: EDT/EST, UTC-4/UTC-5) as the user's local time, NOT Pacific container/sandbox time. Format: `v3.[MMDDYYYY].[HHMM]` in 24-hour Eastern Time.
 
 ---
 
