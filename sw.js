@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v11-09032026-safe-icon';
+const CACHE_NAME = 'nomad-roadtrip-v12-09042026-pixel-safe-icon';
 
 const ASSETS_TO_CACHE = [
   './',

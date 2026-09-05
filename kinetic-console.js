@@ -129,6 +129,7 @@
       this.stampedeGrassTufts = [];
       this.stampedeStars = [];
       this.stampedeEagles = [];
+      this.stampedeClouds = [];
       this.stampedePhase = 0;
 
       // Sensor Coupling & Multi-Axis Parallax Engine
@@ -292,6 +293,24 @@
           height: 0.13 + e * 0.08,
           wingSpan: 16 + e * 3,
           wingFlap: 0
+        });
+      }
+
+      // 5b. Slowly Moving Canyon Twilight Clouds
+      this.stampedeClouds = [];
+      const cloudPuffSets = [
+        [{ ox: 0, oy: 0, r: 1.0 }, { ox: -0.35, oy: 0.12, r: 0.75 }, { ox: 0.35, oy: 0.10, r: 0.8 }, { ox: -0.65, oy: 0.22, r: 0.55 }, { ox: 0.65, oy: 0.20, r: 0.58 }],
+        [{ ox: 0, oy: 0, r: 1.0 }, { ox: -0.4, oy: 0.10, r: 0.8 }, { ox: 0.45, oy: 0.12, r: 0.75 }, { ox: 0.8, oy: 0.22, r: 0.5 }],
+        [{ ox: 0, oy: 0, r: 0.9 }, { ox: -0.3, oy: 0.10, r: 0.7 }, { ox: 0.3, oy: 0.12, r: 0.7 }]
+      ];
+      for (let c = 0; c < 5; c++) {
+        this.stampedeClouds.push({
+          x: (c / 5) * 1.3 - 0.15,
+          y: 0.08 + Math.random() * 0.28,
+          speed: 0.00018 + Math.random() * 0.00016,
+          width: 75 + Math.random() * 65,
+          puffs: cloudPuffSets[c % cloudPuffSets.length],
+          opacity: 0.24 + Math.random() * 0.18
         });
       }
 
@@ -759,18 +778,24 @@
     _loop() {
       if (!this.isActive || !this.isVisible) return;
 
-      this._updatePhysics();
-      if (this.mode === 'kitt') {
-        this._renderKittMode();
-      } else if (this.mode === 'underwater') {
-        this._renderUnderwater();
-      } else if (this.mode === 'stampede') {
-        this._renderStampedeMode();
-      } else {
-        this._renderStarfieldMode();
+      try {
+        this._updatePhysics();
+        if (this.mode === 'kitt') {
+          this._renderKittMode();
+        } else if (this.mode === 'underwater') {
+          this._renderUnderwater();
+        } else if (this.mode === 'stampede') {
+          this._renderStampedeMode();
+        } else {
+          this._renderStarfieldMode();
+        }
+      } catch (err) {
+        console.warn('KineticConsole render loop error:', err);
+      } finally {
+        if (this.isActive && this.isVisible) {
+          this.rafId = requestAnimationFrame(this._loop);
+        }
       }
-
-      this.rafId = requestAnimationFrame(this._loop);
     }
 
     _updatePhysics() {
@@ -1704,6 +1729,10 @@
       }
       ctx.restore();
 
+      // Micro-display bezel dimensions (synchronized between QFP package, HUD layer, and regen braking)
+      const boxW = Math.min(136 * this.dpr, boardSize * 0.44);
+      const boxH = Math.min(114 * this.dpr, boardSize * 0.38);
+
       // Regenerative Braking Energy Dissipation Surge (Reverse Pulses from DSP)
       if (isBraking) {
         ctx.save();
@@ -1726,10 +1755,6 @@
       const icZ = 0.55;
       const compShadowOffX = -totalTiltX * 0.45 * this.dpr;
       const compShadowOffY = -totalTiltY * 0.45 * this.dpr + 3 * this.dpr;
-
-      // Micro-display bezel dimensions (synchronized between QFP package and HUD layer)
-      const boxW = Math.min(136 * this.dpr, boardSize * 0.44);
-      const boxH = Math.min(114 * this.dpr, boardSize * 0.38);
 
       for (let i = 0; i < this.pcbComponents.length; i++) {
         const comp = this.pcbComponents[i];
@@ -2115,6 +2140,41 @@
 
       // Glowing Silver Crescent Moon with Soft Luminous Halo
       this._drawCrescentMoon(ctx, cx + w * 0.28, horizonY * 0.34, 16 * this.dpr);
+
+      // Slowly Moving Canyon Twilight Clouds
+      if (this.stampedeClouds) {
+        ctx.save();
+        for (let cloud of this.stampedeClouds) {
+          cloud.x += cloud.speed;
+          if (cloud.x > 1.35) cloud.x = -0.35;
+
+          const cloudX = cloud.x * w;
+          const cloudY = cloud.y * horizonY;
+          const baseR = cloud.width * 0.28 * this.dpr;
+
+          ctx.save();
+          ctx.translate(cloudX, cloudY);
+          ctx.globalAlpha = cloud.opacity;
+
+          for (let p of cloud.puffs) {
+            const px = p.ox * cloud.width * this.dpr;
+            const py = p.oy * cloud.width * 0.35 * this.dpr;
+            const pr = baseR * p.r;
+
+            const cg = ctx.createRadialGradient(px, py, pr * 0.1, px, py, pr);
+            cg.addColorStop(0, 'rgba(218, 198, 238, 0.42)');
+            cg.addColorStop(0.65, 'rgba(135, 110, 170, 0.20)');
+            cg.addColorStop(1, 'rgba(40, 20, 60, 0)');
+
+            ctx.fillStyle = cg;
+            ctx.beginPath();
+            ctx.arc(px, py, pr, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+        ctx.restore();
+      }
 
       // 3. Distant Ark Vessel Silhouette & Horizon Beacon Light
       this._drawArkVessel(ctx, cx, horizonY);
@@ -2516,25 +2576,62 @@
       ctx.translate(x, y);
       ctx.rotate(bankAngle);
 
-      ctx.fillStyle = 'rgba(20, 7, 2, 0.92)';
+      // 1. Feathered Wings (Lighter Warm Desert Amber / Golden Brown)
+      ctx.fillStyle = 'rgba(196, 142, 85, 0.95)';
       ctx.beginPath();
-      // Eagle Body
-      ctx.ellipse(0, 0, span * 0.15, span * 0.35, 0, 0, Math.PI * 2);
+      ctx.moveTo(-span * 0.95, -span * 0.08);
+      ctx.quadraticCurveTo(-span * 0.42, -span * 0.38, 0, -span * 0.12);
+      ctx.quadraticCurveTo(span * 0.42, -span * 0.38, span * 0.95, -span * 0.08);
+      ctx.quadraticCurveTo(span * 0.52, span * 0.18, 0, span * 0.06);
+      ctx.quadraticCurveTo(-span * 0.52, span * 0.18, -span * 0.95, -span * 0.08);
       ctx.fill();
 
-      // Spread Wings
+      // Wing Upper Covert Feather Highlights (Warm amber gold)
+      ctx.fillStyle = 'rgba(235, 185, 125, 0.85)';
       ctx.beginPath();
-      ctx.moveTo(-span * 0.9, -span * 0.1);
-      ctx.quadraticCurveTo(-span * 0.4, -span * 0.35, 0, -span * 0.1);
-      ctx.quadraticCurveTo(span * 0.4, -span * 0.35, span * 0.9, -span * 0.1);
-      ctx.quadraticCurveTo(span * 0.5, span * 0.15, 0, span * 0.05);
-      ctx.quadraticCurveTo(-span * 0.5, span * 0.15, -span * 0.9, -span * 0.1);
+      ctx.moveTo(-span * 0.7, -span * 0.1);
+      ctx.quadraticCurveTo(-span * 0.35, -span * 0.3, 0, -span * 0.1);
+      ctx.quadraticCurveTo(span * 0.35, -span * 0.3, span * 0.7, -span * 0.1);
+      ctx.quadraticCurveTo(span * 0.35, span * 0.04, 0, span * 0.02);
+      ctx.quadraticCurveTo(-span * 0.35, span * 0.04, -span * 0.7, -span * 0.1);
       ctx.fill();
 
-      // Wingtip primary feathers
-      ctx.strokeStyle = 'rgba(240, 130, 30, 0.4)';
-      ctx.lineWidth = 1.0 * this.dpr;
+      // Wingtip primary feathers rim (Bright golden crest)
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+      ctx.lineWidth = 1.2 * this.dpr;
       ctx.stroke();
+
+      // 2. Eagle Body (Rich Amber Tawny)
+      ctx.fillStyle = 'rgba(160, 105, 55, 0.96)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, span * 0.16, span * 0.36, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Iconic White/Golden Crown & Tail Feathers (Bald / Golden Eagle markings)
+      // Head Crown
+      ctx.fillStyle = 'rgba(255, 250, 240, 0.96)';
+      ctx.beginPath();
+      ctx.ellipse(0, -span * 0.28, span * 0.10, span * 0.14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Beak (Warm Golden Yellow)
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(-span * 0.04, -span * 0.38);
+      ctx.lineTo(span * 0.04, -span * 0.38);
+      ctx.lineTo(0, -span * 0.48);
+      ctx.closePath();
+      ctx.fill();
+
+      // White Fan Tail
+      ctx.fillStyle = 'rgba(255, 250, 240, 0.92)';
+      ctx.beginPath();
+      ctx.moveTo(-span * 0.12, span * 0.28);
+      ctx.lineTo(span * 0.12, span * 0.28);
+      ctx.lineTo(span * 0.18, span * 0.46);
+      ctx.lineTo(-span * 0.18, span * 0.46);
+      ctx.closePath();
+      ctx.fill();
 
       ctx.restore();
     }

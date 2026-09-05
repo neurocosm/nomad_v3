@@ -420,18 +420,21 @@
       animation: diceRollAnim 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* Auto-Cycling Screensaver - Spins Die crisp 360 degrees every 2 seconds (ONLY Die icon, NEVER Route Shield) */
-    @keyframes diceSpinEvery2s {
+    /* Auto-Cycling Screensaver - Spins Die on 9th second, transforming pip faces (6 -> 5 -> 4 -> 3 -> 2 -> 1) */
+    @keyframes diceSnapSpin {
       0%   { transform: rotate(0deg) scale(1); }
-      25%  { transform: rotate(360deg) scale(1.12); }
-      35%  { transform: rotate(360deg) scale(1); }
+      45%  { transform: rotate(180deg) scale(1.18); }
+      90%  { transform: rotate(360deg) scale(1.04); }
       100% { transform: rotate(360deg) scale(1); }
     }
 
-    .map-overlay-route:not(.has-shield).auto-cycling .corner-pod-dice-svg,
-    .map-overlay-route:not(.has-shield) .corner-pod-dice-svg.auto-spinning {
-      animation: diceSpinEvery2s 2s infinite cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    .corner-pod-dice-svg.snap-spinning {
+      animation: diceSnapSpin 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    .map-overlay-route:not(.has-shield).auto-cycling .corner-pod-dice-svg {
       color: #ffb703 !important;
+      transition: color 0.3s ease;
     }
 
     .map-overlay-route:not(.has-shield).auto-cycling {
@@ -2425,24 +2428,145 @@
       `;
     }
 
-    let isAutoCyclingFidgets = false;
-    let autoCycleTimer = null;
-    const AUTO_CYCLE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+    let isAutoCyclingFidgets = true;
+    let autoCycleTicker = null;
+    let fidgetElapsedSeconds = 0;
+    let currentDieFace = 6;
 
-    function getDieIconHTML() {
-      const spinningClass = (isAutoCyclingFidgets && isFidgetActive()) ? ' auto-spinning' : '';
-      return `
-        <div class="corner-pod-content die-pod-content">
-          <svg class="corner-pod-dice-svg${spinningClass}" id="corner-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <rect x="2.5" y="2.5" width="19" height="19" rx="4.5" ry="4.5" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1.8"/>
+    function getDiePipsHTML(face) {
+      switch (face) {
+        case 1:
+          return `<circle cx="12" cy="12" r="1.85" fill="currentColor"/>`;
+        case 2:
+          return `
+            <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
+            <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
+          `;
+        case 3:
+          return `
+            <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.4" fill="currentColor"/>
+            <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
+          `;
+        case 4:
+          return `
             <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
             <circle cx="16.8" cy="7.2" r="1.4" fill="currentColor"/>
-            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
             <circle cx="7.2" cy="16.8" r="1.4" fill="currentColor"/>
             <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
+          `;
+        case 6:
+          return `
+            <circle cx="7.2" cy="6.8" r="1.3" fill="currentColor"/>
+            <circle cx="7.2" cy="12.0" r="1.3" fill="currentColor"/>
+            <circle cx="7.2" cy="17.2" r="1.3" fill="currentColor"/>
+            <circle cx="16.8" cy="6.8" r="1.3" fill="currentColor"/>
+            <circle cx="16.8" cy="12.0" r="1.3" fill="currentColor"/>
+            <circle cx="16.8" cy="17.2" r="1.3" fill="currentColor"/>
+          `;
+        case 5:
+        default:
+          return `
+            <circle cx="7.2" cy="7.2" r="1.4" fill="currentColor"/>
+            <circle cx="16.8" cy="7.2" r="1.4" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.45" fill="currentColor"/>
+            <circle cx="7.2" cy="16.8" r="1.4" fill="currentColor"/>
+            <circle cx="16.8" cy="16.8" r="1.4" fill="currentColor"/>
+          `;
+      }
+    }
+
+    function getDieIconHTML() {
+      const activeFace = (isAutoCyclingFidgets && isFidgetActive()) ? (currentDieFace || 6) : 5;
+      return `
+        <div class="corner-pod-content die-pod-content">
+          <svg class="corner-pod-dice-svg" id="corner-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2.5" y="2.5" width="19" height="19" rx="4.5" ry="4.5" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1.8"/>
+            <g id="corner-dice-pips">
+              ${getDiePipsHTML(activeFace)}
+            </g>
           </svg>
         </div>
       `;
+    }
+
+    function triggerDieSnapSpin(targetFace) {
+      const diceSvg = document.getElementById('corner-dice-svg');
+      if (!diceSvg) return;
+
+      if (navigator.vibrate) {
+        try { navigator.vibrate(15); } catch (_) {}
+      }
+
+      // Reset and trigger snap spin
+      diceSvg.classList.remove('snap-spinning');
+      void diceSvg.offsetWidth;
+      diceSvg.classList.add('snap-spinning');
+
+      // Swap pips halfway through the 850ms spin (at 420ms, rotated 180°)
+      setTimeout(() => {
+        currentDieFace = targetFace;
+        const pipsEl = document.getElementById('corner-dice-pips');
+        if (pipsEl) {
+          pipsEl.innerHTML = getDiePipsHTML(targetFace);
+        }
+      }, 420);
+
+      // Clean up snap-spinning class once animation finishes
+      setTimeout(() => {
+        if (diceSvg) {
+          diceSvg.classList.remove('snap-spinning');
+        }
+      }, 880);
+    }
+
+    function stopFidgetAutoCycleTimer() {
+      if (autoCycleTicker) {
+        clearInterval(autoCycleTicker);
+        autoCycleTicker = null;
+      }
+    }
+
+    function startFidgetAutoCycleTimer(resetCountdown = true) {
+      stopFidgetAutoCycleTimer();
+      if (!isAutoCyclingFidgets || !isFidgetActive()) return;
+
+      if (resetCountdown) {
+        fidgetElapsedSeconds = 0;
+        currentDieFace = 6;
+        const pipsEl = document.getElementById('corner-dice-pips');
+        if (pipsEl) {
+          pipsEl.innerHTML = getDiePipsHTML(6);
+        }
+      }
+
+      autoCycleTicker = setInterval(() => {
+        if (!isAutoCyclingFidgets || !isFidgetActive()) {
+          stopFidgetAutoCycleTimer();
+          return;
+        }
+
+        fidgetElapsedSeconds++;
+
+        // Every 10 seconds: on the 9th second (9, 19, 29, 39, 49, 59), spin and transition to next countdown face!
+        if (fidgetElapsedSeconds === 9) {
+          triggerDieSnapSpin(5);
+        } else if (fidgetElapsedSeconds === 19) {
+          triggerDieSnapSpin(4);
+        } else if (fidgetElapsedSeconds === 29) {
+          triggerDieSnapSpin(3);
+        } else if (fidgetElapsedSeconds === 39) {
+          triggerDieSnapSpin(2);
+        } else if (fidgetElapsedSeconds === 49) {
+          triggerDieSnapSpin(1);
+        } else if (fidgetElapsedSeconds === 59) {
+          triggerDieSnapSpin(6);
+        } else if (fidgetElapsedSeconds >= 60) {
+          fidgetElapsedSeconds = 0;
+          currentDieFace = 6;
+          rotateNextAutoFidget();
+        }
+      }, 1000);
     }
 
     function isFidgetActive() {
@@ -2487,7 +2611,7 @@
           routeContainer.classList.remove('has-shield');
           if (isAutoCyclingFidgets && inFidget) {
             routeContainer.classList.add('auto-cycling');
-            routeContainer.setAttribute('title', 'Auto-Cycle Active (Spins every 2s) - Long-Press to Stop');
+            routeContainer.setAttribute('title', `Auto-Cycle Active (Die: ${currentDieFace}) - Long-Press to Pause`);
           } else {
             routeContainer.classList.remove('auto-cycling');
             routeContainer.setAttribute('title', 'Cycle Fidget Consoles (Long-Press: Auto-Cycle)');
@@ -2497,7 +2621,7 @@
     }
 
     async function rotateNextAutoFidget() {
-      if (!isAutoCyclingFidgets) return;
+      if (!isAutoCyclingFidgets || !isFidgetActive()) return;
       const fidgets = getFidgetIndices();
       if (fidgets.length === 0) return;
       let curPos = fidgets.indexOf(currentThemeIndex);
@@ -2512,10 +2636,7 @@
       const nextState = typeof forceState === 'boolean' ? forceState : !isAutoCyclingFidgets;
       isAutoCyclingFidgets = nextState;
 
-      if (autoCycleTimer) {
-        clearInterval(autoCycleTimer);
-        autoCycleTimer = null;
-      }
+      stopFidgetAutoCycleTimer();
 
       if (isAutoCyclingFidgets) {
         if (typeof playFidgetAudio === 'function') playFidgetAudio();
@@ -2526,17 +2647,19 @@
           const synthIdx = mapThemes.findIndex(t => t.id === 'kinetic-synthomatic');
           const targetIdx = synthIdx !== -1 ? synthIdx : getFidgetIndices()[0];
           await applyThemeByIndex(targetIdx, true);
+        } else {
+          startFidgetAutoCycleTimer(true);
         }
         renderRouteBadges();
-        showMapThemeToast({ name: 'AUTO-CYCLE ON (Spins every 2s)', type: 'kinetic-starfield' });
-        autoCycleTimer = setInterval(rotateNextAutoFidget, AUTO_CYCLE_INTERVAL_MS);
+        showMapThemeToast({ name: 'AUTO-CYCLE ON (Countdown 6→1)', type: 'kinetic-starfield' });
       } else {
+        stopFidgetAutoCycleTimer();
         if (typeof playFidgetAudio === 'function') playFidgetAudio();
         if (navigator.vibrate) {
           try { navigator.vibrate(50); } catch (_) {}
         }
         renderRouteBadges();
-        showMapThemeToast({ name: 'AUTO-CYCLE OFF (Paused)', type: 'kinetic-starfield' });
+        showMapThemeToast({ name: 'AUTO-CYCLE PAUSED', type: 'kinetic-starfield' });
       }
     }
 
@@ -3386,6 +3509,7 @@
     // Split Navigation & Kinetic Console Theme Engine
     let lastRealMapIndex = (currentThemeIndex < 2) ? currentThemeIndex : 0;
     let lastFidgetIndex = (currentThemeIndex >= 2) ? currentThemeIndex : 2;
+    let activeLoadedMapStyleType = null;
 
     function isFidgetTheme(idx) {
       return mapThemes[idx] && mapThemes[idx].type === 'kinetic-starfield';
@@ -3476,14 +3600,20 @@
           mapEl.style.display = 'block';
         }
         if (map) {
-          try {
-            const styleObj = await getMapStyleObject(theme);
-            map.setStyle(styleObj);
-          } catch (e) {
-            console.warn('NOMAD: Error setting map style, fallback to Liberty URL', e);
-            map.setStyle('https://tiles.openfreemap.org/styles/liberty');
+          if (activeLoadedMapStyleType !== theme.type) {
+            try {
+              const styleObj = await getMapStyleObject(theme);
+              map.setStyle(styleObj);
+              activeLoadedMapStyleType = theme.type;
+            } catch (e) {
+              console.warn('NOMAD: Error setting map style, fallback to Liberty URL', e);
+              map.setStyle('https://tiles.openfreemap.org/styles/liberty');
+              activeLoadedMapStyleType = 'fallback';
+            }
           }
-          map.resize();
+          requestAnimationFrame(() => {
+            if (map) map.resize();
+          });
         }
         if (vehicleSvg && !isGalagaMode) {
           vehicleSvg.setAttribute('fill', '#007aff');
@@ -3499,6 +3629,15 @@
 
       // Re-evaluate corner pods for current mode & badges
       renderRouteBadges();
+
+      // Manage auto-cycling timer for kinetic fidget mode
+      if (theme.type === 'kinetic-starfield') {
+        if (isAutoCyclingFidgets) {
+          startFidgetAutoCycleTimer(true);
+        }
+      } else {
+        stopFidgetAutoCycleTimer();
+      }
     }
 
     // 1. Lower-Left Corner Pod: DEDICATED to cycling Map navigation themes (or returning directly from fidget mode)
@@ -3516,9 +3655,7 @@
       if (realMaps.length === 0) return;
 
       if (isFidgetActive()) {
-        if (isAutoCyclingFidgets) {
-          toggleAutoCycleFidgets(false);
-        }
+        stopFidgetAutoCycleTimer();
         const targetMapIdx = (lastRealMapIndex >= 0 && realMaps.includes(lastRealMapIndex)) ? lastRealMapIndex : realMaps[0];
         await applyThemeByIndex(targetMapIdx, true);
       } else {
@@ -3547,11 +3684,9 @@
         try { navigator.vibrate([15, 25, 15]); } catch(e) {}
       }
 
-      // If auto-cycling is active, reset the 2-minute timer for the newly chosen console
-      if (isAutoCyclingFidgets && autoCycleTimer) {
-        clearInterval(autoCycleTimer);
-        autoCycleTimer = setInterval(rotateNextAutoFidget, AUTO_CYCLE_INTERVAL_MS);
-      }
+      // Ensure auto-cycling is active and countdown resets to 6 for the next fidget console
+      isAutoCyclingFidgets = true;
+      startFidgetAutoCycleTimer(true);
 
       const fidgets = getFidgetIndices();
       if (fidgets.length === 0) return;
@@ -3651,7 +3786,7 @@
       const speedValueEl = document.getElementById('current-speed');
       const speedUnitEl = document.getElementById('speed-unit-label');
 
-      if (rawSpeedMps === null || isNaN(rawSpeedMps) || rawSpeedMps < 0) {
+      if (rawSpeedMps === null || isNaN(rawSpeedMps) || rawSpeedMps <= 0) {
         speedValueEl.innerText = '0';
         speedUnitEl.innerText = isMph ? 'MPH' : 'KM/H';
         speedValueEl.classList.remove('speed-near-limit', 'speed-over-limit');
@@ -3659,6 +3794,14 @@
       }
 
       const liveMph = Math.round(rawSpeedMps * 2.23694);
+      // Hard zero-clamp for stationary drift under 2 MPH
+      if (liveMph < 2) {
+        speedValueEl.innerText = '0';
+        speedUnitEl.innerText = isMph ? 'MPH' : 'KM/H';
+        speedValueEl.classList.remove('speed-near-limit', 'speed-over-limit');
+        return;
+      }
+
       if (isMph) {
         speedValueEl.innerText = liveMph;
         speedUnitEl.innerText = 'MPH';
@@ -3695,10 +3838,27 @@
       } catch (err) {}
     }
 
+    function handleAppWakeResume() {
+      requestWakeLock();
+      if (isFidgetActive()) {
+        if (window.KineticConsole) {
+          window.KineticConsole.show();
+        }
+      } else {
+        if (map) {
+          requestAnimationFrame(() => {
+            if (map) map.resize();
+          });
+        }
+      }
+    }
+
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') requestWakeLock();
+      if (document.visibilityState === 'visible') {
+        handleAppWakeResume();
+      }
     });
-    window.addEventListener('focus', requestWakeLock);
+    window.addEventListener('focus', handleAppWakeResume);
     window.addEventListener('touchstart', requestWakeLock, { passive: true });
     setInterval(requestWakeLock, 15000);
 
@@ -3745,6 +3905,9 @@
           }
           window.KineticConsole.show();
         }
+        if (isAutoCyclingFidgets && !autoCycleTicker) {
+          startFidgetAutoCycleTimer(true);
+        }
       }
 
       if (mapCard) {
@@ -3766,6 +3929,7 @@
 
       try {
         const styleObj = await getMapStyleObject(initialTheme);
+        activeLoadedMapStyleType = initialTheme.type;
         map = new maplibregl.Map({
           container: 'map',
           style: styleObj,
@@ -3780,6 +3944,7 @@
         });
       } catch (err) {
         console.warn('NOMAD: Fallback initializing map with raw OpenFreeMap style URL', err);
+        activeLoadedMapStyleType = 'fallback';
         map = new maplibregl.Map({
           container: 'map',
           style: 'https://tiles.openfreemap.org/styles/liberty',
@@ -4331,8 +4496,23 @@
       lastLat = latitude;
       lastLon = longitude;
 
-      rawSpeedMps = speed;
-      const speedMph = (speed !== null && !isNaN(speed)) ? (speed * 2.23694) : 0;
+      // Stationary Noise Filter & Zero-Clamp Deadband
+      // Indoor multipath reflections and phone shaking create artificial micro-velocities (0.3 - 1.2 m/s = 1 - 3 MPH).
+      // Ignore velocities below 1.8 MPH (0.8 m/s), or below 2.5 MPH when accuracy is poor (> 20m).
+      let filteredSpeedMps = speed;
+      if (filteredSpeedMps !== null && !isNaN(filteredSpeedMps)) {
+        const rawMph = filteredSpeedMps * 2.23694;
+        if (rawMph < 1.8) {
+          filteredSpeedMps = 0;
+        } else if (rawAccuracyMeters && rawAccuracyMeters > 20 && rawMph < 2.5) {
+          filteredSpeedMps = 0;
+        }
+      } else {
+        filteredSpeedMps = 0;
+      }
+
+      rawSpeedMps = filteredSpeedMps;
+      const speedMph = rawSpeedMps > 0 ? (rawSpeedMps * 2.23694) : 0;
 
       if (heading !== null && !isNaN(heading)) {
         updateHeading(heading, false);

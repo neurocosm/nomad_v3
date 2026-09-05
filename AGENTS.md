@@ -25,28 +25,28 @@
   - Kept hardware A2DP link pre-warming and sub-audible keep-alive for zero-latency Bluetooth/system audio responsiveness.
   - Placed experimental silent-switch speaker redirection on future wishlist to ensure 100% stable single-trigger playback.
 
-### Step 5: Synthomatic Console Redesign (Square Ratio & Declutter) [IN-PROGRESS / TESTING]
-- **Status**: Implemented & Ready for User Testing.
+### Step 5: Synthomatic Console Redesign & Engine Stability [COMPLETED & VERIFIED]
+- **Status**: Completed & Verified.
 - **Achievements**:
   - **1:1 Square Aspect Ratio**: Re-anchored the Synthomatic PCB canvas and coordinate space to `Math.min(w, h) * 0.90` so the board stays a crisp, non-distorted square centered inside the map viewport.
   - **Clean 3-Component Layout**: Stripped micro-component clutter down to the central hero `SYNTH-DSP 8800` chip flanked by 2 iconic secondary components: the `16.000 MHz` brushed aluminum Quartz Crystal Oscillator and the `24C512` SOIC-8 Sound ROM.
   - **Streamlined Geometric Buses**: Cleaned up erratic wiring into 8 balanced, 45-degree chamfered gold/copper/cyan traces connecting the central DSP to the crystal clock, ROM bus, and stereo audio DAC outputs.
   - **Precision Mounting Pads**: Replaced cluttered test points with 4 corner gold annular mounting pads with metallic specular glints and central drill holes.
   - **Smooth Kinetic Flow**: Replaced 22 random points with 8 rhythmic glowing data packets pulsing down active hero traces, with central DSP energy discharge upon regenerative braking.
+  - **Circuit Crash Bug Fixed**: Fixed lexical declaration order of `boxW` before regenerative braking pulse surge; wrapped the kinetic loop in `try...catch...finally` so the animation loop can never permanently terminate.
+  - **Instant Screen Swapping & Blank Prevention**: Removed redundant `map.setStyle()` calls on theme return so cached vector tiles and WebGL pipelines stay in GPU memory; added `visibilitychange` and `focus` wake-up hooks so returning from Notes never blanks the viewport.
+  - **Stationary Speedometer Deadband**: Added hard zero-clamp filter for indoor GPS multipath drift and phone shaking (< 1.8 MPH), locking speed strictly to 0 MPH when stationary.
 
-### Step 6: Die Long-Press Auto-Cycling (Fidget Screen Saver)
-- **Status**: Implemented & Ready for User Testing.
+### Step 6: Die Auto-Cycling Fidget Screensaver & Countdown Mechanic [COMPLETED & VERIFIED]
+- **Status**: Completed & Verified.
 - **Achievements**:
-  - **Long-Press Activation**: 700ms long-press on the lower-right `#route-badge-container` Die button toggles Auto-Cycle screen saver mode.
-  - **Spinning Die Indicator (Every 2 Seconds)**: Replaced static/breathing glow with a crisp 360-degree snap spin every 2 seconds (`@keyframes diceSpinEvery2s`) on the die icon to indicate active Auto-Cycle mode.
-  - **HUD Integration**: Integrated directly into `renderRouteBadges()` so periodic route flippers and GPS location updates never strip away the auto-cycling indicator or die icon.
-  - **Timed 2-Minute Rotation**: Rotates to the next kinetic fidget console every 2 minutes.
-  - **Manual Skip with Timer Reset**: Short-tapping the Die advances to the next fidget console immediately and restarts the 2-minute timer for the chosen console.
-  - **Route Badge Zero-Spin Guarantee**: Route shields, state highway badges, and interstate shields are strictly locked against spinning or animation (`animation: none !important`). Only the Die icon during active fidget console screensaver mode can spin every 2 seconds.
-  - **Instant Dismissal**: Long-pressing the Die pauses Auto-Cycle; tapping the lower-left Map button instantly halts Auto-Cycle and returns to navigation.
+  - **Die Face Pip Countdown (6 → 5 → 4 → 3 → 2 → 1)**: When in active auto-cycle fidget mode, the Die starts on face 6. Every 10 seconds, it transitions to the next lower face (6 → 5 → 4 → 3 → 2 → 1), and after reaching 1, rotates to the next kinetic fidget console!
+  - **9th-Second Snap Spin Synchronizer**: Die spin triggers right on the 9th second of each 10s step (seconds 9, 19, 29, 39, 49, 59). At 420ms into the 0.85s snap spin (rotated 180° with elastic bounce), the pips smoothly morph into the next face value, landing and resting firmly on the new face right as the 10th second arrives.
+  - **Clean Fidget Canvas**: Kept the bottom-center viewport completely uncluttered and open, removing intrusive pagination dots so the full kinetic canvas and horizon remain unobstructed.
+  - **Stampede Cloud Formations & Golden Eagle**: Added slowly drifting, multi-lobed celestial clouds across the moonlit canyon twilight sky, and lightened the soaring eagles with warm desert tawny / golden plumage, white head/tail markings, and glowing golden wingtip feather accents.
+  - **Manual Skip with Timer Reset**: Short-tapping the Die advances immediately to the next fidget console and restarts the countdown smoothly from face 6.
+  - **Route Badge Zero-Spin Guarantee**: Route shields, state highway badges, and interstate shields are strictly locked against spinning (`animation: none !important`). Only the Die icon during active fidget mode spins on countdown steps.
+  - **Instant Dismissal & Pause**: Long-pressing the Die toggles Auto-Cycle pause/resume; tapping the lower-left Map button returns instantly to navigation and pauses rotation.
 
-### Step 7: Map Feature Legend & POI Essential Services Filter in features.html
-- **Status**: Queued.
-- **Goals**:
-  - Map Feature Legend in features.html: Color-coded reference for waterways, parks/forests, building footprints, road hierarchy, and POI icons.
-  - Essential Highway Services POI Filter: Tile style filter to optionally hide non-essential commercial POIs while retaining gas stations, coffee, and rest stops.
+### Post-v4 Wishlist / Deferred
+- **Map Feature Legend & POI Essential Services Filter**: Deferred until after Version 4. Since NOMAD functions as a telemetry and kinetic road-trip HUD rather than a turn-by-turn POI directory, POI clutter filtering will be revisited in future phases.
