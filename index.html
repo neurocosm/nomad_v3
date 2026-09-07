@@ -409,8 +409,19 @@
       filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
     }
 
-    .map-overlay-interstate:not(.has-shield):active .corner-pod-map-svg,
-    .map-overlay-route:not(.has-shield):active .corner-pod-dice-svg {
+    .map-overlay-interstate:not(.has-shield):active .corner-pod-map-svg {
+      color: #ffb703;
+      transform: scale(0.88);
+      filter: drop-shadow(0 0 10px rgba(255, 183, 3, 0.95));
+    }
+
+    .map-overlay-route:not(.has-shield):not(.auto-cycling):active .corner-pod-dice-svg {
+      color: #ffffff;
+      transform: scale(0.88);
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+    }
+
+    .map-overlay-route:not(.has-shield).auto-cycling:active .corner-pod-dice-svg {
       color: #ffb703;
       transform: scale(0.88);
       filter: drop-shadow(0 0 10px rgba(255, 183, 3, 0.95));
@@ -587,8 +598,17 @@
       transform: scale(1.15);
     }
 
-    #map-card.is-starfield-mode .map-overlay-interstate:active .corner-pod-map-svg,
-    #map-card.is-starfield-mode .map-overlay-route:active .corner-pod-dice-svg {
+    #map-card.is-starfield-mode .map-overlay-interstate:active .corner-pod-map-svg {
+      color: #ffb703;
+      transform: scale(0.88);
+    }
+
+    #map-card.is-starfield-mode .map-overlay-route:not(.auto-cycling):active .corner-pod-dice-svg {
+      color: #ffffff;
+      transform: scale(0.88);
+    }
+
+    #map-card.is-starfield-mode .map-overlay-route.auto-cycling:active .corner-pod-dice-svg {
       color: #ffb703;
       transform: scale(0.88);
     }
@@ -2450,10 +2470,10 @@
       `;
     }
 
-    let isAutoCyclingFidgets = true;
+    let isAutoCyclingFidgets = false;
     let autoCycleTicker = null;
     let fidgetElapsedSeconds = 0;
-    let currentDieFace = 6;
+    let currentDieFace = 5;
 
     function getDiePipsHTML(face) {
       switch (face) {
@@ -2499,7 +2519,7 @@
     }
 
     function getDieIconHTML() {
-      const activeFace = currentDieFace || 6;
+      const activeFace = (isAutoCyclingFidgets && isFidgetActive()) ? (currentDieFace || 6) : 5;
       return `
         <div class="corner-pod-content die-pod-content">
           <svg class="corner-pod-dice-svg" id="corner-dice-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -2559,6 +2579,16 @@
 
       if (resetTimer) {
         fidgetElapsedSeconds = 0;
+        currentDieFace = 6;
+        const pipsEl = document.getElementById('corner-dice-pips');
+        if (pipsEl) {
+          pipsEl.innerHTML = getDiePipsHTML(6);
+        }
+        const routeContainer = document.getElementById('route-badge-container');
+        if (routeContainer) {
+          routeContainer.classList.add('auto-cycling');
+          routeContainer.setAttribute('title', 'Auto-Cycle Active (Die: 6) - Long-Press to Pause');
+        }
       }
 
       autoCycleTicker = setInterval(() => {
@@ -2569,13 +2599,22 @@
 
         fidgetElapsedSeconds++;
 
-        // At second 9: start the 0.85s snap-spin animation and roll the die face
+        // 60-second countdown with die counting down 6 -> 5 -> 4 -> 3 -> 2 -> 1, then goes to next fidget
         if (fidgetElapsedSeconds === 9) {
-          const nextFace = (currentDieFace % 6) + 1;
-          triggerDieSnapSpin(nextFace);
-        } else if (fidgetElapsedSeconds >= 10) {
-          // At second 10: right as the snap-spin finishes, rotate to the next fidget console!
+          triggerDieSnapSpin(5);
+        } else if (fidgetElapsedSeconds === 19) {
+          triggerDieSnapSpin(4);
+        } else if (fidgetElapsedSeconds === 29) {
+          triggerDieSnapSpin(3);
+        } else if (fidgetElapsedSeconds === 39) {
+          triggerDieSnapSpin(2);
+        } else if (fidgetElapsedSeconds === 49) {
+          triggerDieSnapSpin(1);
+        } else if (fidgetElapsedSeconds === 59) {
+          triggerDieSnapSpin(6);
+        } else if (fidgetElapsedSeconds >= 60) {
           fidgetElapsedSeconds = 0;
+          currentDieFace = 6;
           rotateNextAutoFidget();
         }
       }, 1000);
@@ -2661,14 +2700,16 @@
         } else {
           startFidgetAutoCycleTimer(true);
         }
+        currentDieFace = 6;
         renderRouteBadges();
-        showMapThemeToast({ name: 'AUTO-CYCLE ON (10s Cycle)', type: 'kinetic-starfield' });
+        showMapThemeToast({ name: 'AUTO-CYCLE ON (60s Countdown)', type: 'kinetic-starfield' });
       } else {
         stopFidgetAutoCycleTimer();
         if (typeof playFidgetAudio === 'function') playFidgetAudio();
         if (navigator.vibrate) {
           try { navigator.vibrate(50); } catch (_) {}
         }
+        currentDieFace = 5;
         renderRouteBadges();
         showMapThemeToast({ name: 'AUTO-CYCLE PAUSED', type: 'kinetic-starfield' });
       }
@@ -3684,6 +3725,8 @@
 
       if (isFidgetActive()) {
         stopFidgetAutoCycleTimer();
+        isAutoCyclingFidgets = false;
+        currentDieFace = 5;
         const targetMapIdx = (lastRealMapIndex >= 0 && realMaps.includes(lastRealMapIndex)) ? lastRealMapIndex : realMaps[0];
         await applyThemeByIndex(targetMapIdx, true);
       } else {
@@ -3701,6 +3744,24 @@
         if (event.cancelable) event.preventDefault();
       }
 
+      // If auto-cycling was active, manual scroll stops auto-cycling
+      if (isAutoCyclingFidgets) {
+        isAutoCyclingFidgets = false;
+        stopFidgetAutoCycleTimer();
+      }
+
+      // Die MUST remain WHITE and a 5 when manually scrolling through fidgets
+      currentDieFace = 5;
+      const pipsEl = document.getElementById('corner-dice-pips');
+      if (pipsEl) {
+        pipsEl.innerHTML = getDiePipsHTML(5);
+      }
+      const routeContainer = document.getElementById('route-badge-container');
+      if (routeContainer) {
+        routeContainer.classList.remove('auto-cycling');
+        routeContainer.setAttribute('title', 'Cycle Fidget Consoles (Long-Press: Auto-Cycle)');
+      }
+
       const diceSvg = document.getElementById('corner-dice-svg');
       if (diceSvg) {
         diceSvg.classList.remove('rolling');
@@ -3710,13 +3771,6 @@
 
       if (navigator.vibrate) {
         try { navigator.vibrate([15, 25, 15]); } catch(e) {}
-      }
-
-      // Roll to next die face on manual click
-      currentDieFace = (currentDieFace % 6) + 1;
-      const pipsEl = document.getElementById('corner-dice-pips');
-      if (pipsEl) {
-        pipsEl.innerHTML = getDiePipsHTML(currentDieFace);
       }
 
       const fidgets = getFidgetIndices();
@@ -3730,11 +3784,6 @@
         if (curPos === -1) curPos = 0;
         const nextFidgetIdx = fidgets[(curPos + 1) % fidgets.length];
         await applyThemeByIndex(nextFidgetIdx, true);
-      }
-
-      // If auto-cycling is active, smoothly restart the 10-second timer for the new console
-      if (isAutoCyclingFidgets && isFidgetActive()) {
-        startFidgetAutoCycleTimer(true);
       }
     }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v15-09062026-dice-autocycle-sync';
+const CACHE_NAME = 'nomad-roadtrip-v16-09062026-dice-white5-countdown60';
 
 const ASSETS_TO_CACHE = [
   './',

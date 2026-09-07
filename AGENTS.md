@@ -37,15 +37,15 @@
   - **Instant Screen Swapping & Blank Prevention**: Removed redundant `map.setStyle()` calls on theme return so cached vector tiles and WebGL pipelines stay in GPU memory; added `visibilitychange` and `focus` wake-up hooks so returning from Notes never blanks the viewport.
   - **Stationary Speedometer Deadband**: Added hard zero-clamp filter for indoor GPS multipath drift and phone shaking (< 1.8 MPH), locking speed strictly to 0 MPH when stationary.
 
-### Step 6: Die Auto-Cycling Fidget Screensaver & 10s Rotation Engine [COMPLETED & VERIFIED]
+### Step 6: Die Fidget Navigation & 60s Auto-Cycle Countdown [COMPLETED & VERIFIED]
 - **Status**: Completed & Verified.
 - **Achievements**:
-  - **Direct 10-Second Spin & Console Rotation**: Every 10 seconds in auto-cycle mode, the Die snap-spins and smoothly rotates to the next kinetic fidget console (Starfield → Underwater Ocean → Synthomatic → Stampede). Eliminated the misleading 60-second stall where the die spun 5 times without changing the fidget screen.
-  - **Die Face Consistency (Maps vs. Fidgets)**: Removed the arbitrary hardcoded face 5 on map viewports (`(currentDieFace || 6) : 5`). The Die now consistently renders face 6 across all map and fidget modes, rolling cleanly to subsequent faces upon manual clicks and auto-cycle transitions.
-  - **9th-Second Snap Spin Synchronizer**: The Die spin triggers right on the 9th second of each 10s cycle. At 420ms into the 0.85s snap spin (rotated 180° with elastic bounce), the pips smoothly morph into the next face value, landing and resting firmly right as the 10th second arrives and the next fidget console transitions.
-  - **Touch & Mouse Debounce Guard**: Added `isFidgetCornerTouchHandled` guard to prevent mobile browsers from double-firing `touchend` and synthetic `mouseup`, ensuring single taps cleanly advance by exactly 1 fidget console.
-  - **Manual Skip with Timer Reset**: Short-tapping the Die advances immediately to the next fidget console, rolls the die face, and cleanly resets the 10-second timer if auto-cycling is active.
-  - **Instant Pause & Navigation Dismissal**: Long-pressing the Die (700ms) toggles Auto-Cycle pause/resume (changing the die from amber `#ffb703` to crisp white); tapping the lower-left Map button returns instantly to navigation and stops auto-cycling.
+  - **Manual Scrolling Die Rule (White Face 5)**: When manually tapping through kinetic fidget consoles, the Die strictly remains crisp WHITE (`#ffffff`) and displays face 5 (`currentDieFace = 5`). It never counts up or shifts faces on single taps.
+  - **Active State Color Isolation**: Removed `:active` yellow styling for non-auto-cycling states across standard and starfield modes so the die never flashes yellow during momentary manual taps.
+  - **Long-Press Auto-Cycle Activation (700ms)**: Only upon a deliberate 700ms long-press does the Die turn vibrant yellow/gold (`#ffb703`, `.auto-cycling`) and begin the automated screensaver cycle.
+  - **60-Second Countdown (6 → 5 → 4 → 3 → 2 → 1)**: In auto-cycling mode, the Die starts on face 6. Every 10 seconds, it snap-spins and steps down (6 → 5 → 4 → 3 → 2 → 1). At second 60, right as face 1 completes, it transitions to the next kinetic fidget console (Starfield → Underwater Ocean → Synthomatic → Stampede), resets the die back to 6, and repeats the 60-second cycle.
+  - **9th-Second Snap Spin Synchronizer**: Die spin triggers right on the 9th second of each 10s step (seconds 9, 19, 29, 39, 49, 59). At 420ms into the 0.85s snap spin (rotated 180° with elastic bounce), the pips smoothly morph into the next face value, landing and resting firmly on the new face right as the 10th second arrives.
+  - **Immediate Pause & Reset**: Manually tapping the Die or long-pressing again immediately stops the auto-cycle timer and restores the Die back to crisp WHITE and face 5. Tapping the lower-left Map button returns to navigation and also clears auto-cycling.
 
 ### Post-v4 Wishlist / Deferred
 - **Map Feature Legend & POI Essential Services Filter**: Deferred until after Version 4. Since NOMAD functions as a telemetry and kinetic road-trip HUD rather than a turn-by-turn POI directory, POI clutter filtering will be revisited in future phases.
