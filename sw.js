@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v12-09042026-pixel-safe-icon';
+const CACHE_NAME = 'nomad-roadtrip-v15-09062026-dice-autocycle-sync';
 
 const ASSETS_TO_CACHE = [
   './',
