@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v16-09062026-dice-white5-countdown60';
+const CACHE_NAME = 'nomad-roadtrip-v17-09072026-weather-barometric-pressure';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -47,9 +47,27 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event: Network-First for APIs / Cache-First for App Shell
+// Fetch Event: Network-First for Navigation & APIs / Cache-First with fallback for Static Assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Network-First for Navigation requests (HTML pages)
+  if (event.request.mode === 'navigate' || event.request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
 
   // Network-First for Live Weather and Reverse Geocoding
   if (url.hostname.includes('open-meteo.com') || url.hostname.includes('openstreetmap.org')) {

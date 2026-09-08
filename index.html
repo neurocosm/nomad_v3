@@ -1066,11 +1066,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: clamp(7px, 1.6vh, 12px);
+      gap: clamp(4px, 1.0vh, 8px);
       width: 100%;
       height: 100%;
       min-height: 0;
-      padding: 4px 6px;
+      padding: 2px 6px;
       box-sizing: border-box;
     }
 
@@ -1079,12 +1079,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: clamp(6px, 1.4vh, 9px);
+      gap: clamp(3px, 0.8vh, 6px);
       width: 100%;
     }
 
     .weather-temp {
-      font-size: clamp(2.4rem, 7.8vh, 3.4rem);
+      font-size: clamp(2.1rem, 6.6vh, 3.1rem);
       font-weight: 600;
       line-height: 0.95;
       color: #ffffff;
@@ -1105,7 +1105,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      font-size: clamp(0.95rem, 3.2vw, 1.18rem);
+      font-size: clamp(0.90rem, 2.9vw, 1.12rem);
       font-weight: 600;
       color: #ffffff;
       text-align: center;
@@ -1114,16 +1114,25 @@
       margin: 0;
     }
 
+    .weather-details-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(2px, 0.6vh, 5px);
+      width: 100%;
+    }
+
     .weather-details-stacked {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
-      font-size: clamp(0.95rem, 3.0vw, 1.15rem);
+      gap: clamp(10px, 2.8vw, 16px);
+      font-size: clamp(0.92rem, 2.8vw, 1.15rem);
       font-weight: 600;
-      color: #ffffff;
       white-space: nowrap;
       margin: 0;
+      line-height: 1;
     }
 
     .weather-stat-pill {
@@ -1131,6 +1140,31 @@
       align-items: center;
       justify-content: center;
       gap: 5px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .weather-stat-pill.humidity-pill {
+      color: #38bdf8;
+    }
+
+    .weather-stat-pill.uv-pill {
+      color: #ffb703;
+    }
+
+    .weather-stat-pill.pressure-pill {
+      color: #c084fc;
+      font-size: clamp(0.92rem, 2.8vw, 1.15rem);
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      touch-action: manipulation;
+      gap: 6px;
+    }
+
+    .weather-stat-pill.pressure-pill:active {
+      transform: scale(0.94);
+      opacity: 0.8;
     }
 
     .speed-sign-card {
@@ -1648,22 +1682,38 @@
               <div class="weather-desc-container">Fetching weather...</div>
             </div>
           </div>
-          <div class="weather-details-stacked" id="weather-extra">
-            <div class="weather-stat-pill">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-              </svg>
-              <span id="humidity-val">--%</span>
+          <div class="weather-details-group" id="weather-extra">
+            <div class="weather-details-stacked">
+              <div class="weather-stat-pill humidity-pill">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+                <span id="humidity-val">--%</span>
+              </div>
+
+              <div class="weather-stat-pill uv-pill">
+                <span id="uv-icon-wrap" style="display: inline-flex; align-items: center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                  </svg>
+                </span>
+                <span id="uv-val">--</span>
+              </div>
             </div>
 
-            <div class="weather-stat-pill">
-              <span id="uv-icon-wrap" style="display: inline-flex; align-items: center;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                  <circle cx="12" cy="12" r="4"/>
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            <div class="weather-stat-pill pressure-pill" id="pressure-stat-pill" title="Barometric Pressure (Tap to toggle inHg/hPa)">
+              <span id="pressure-icon-wrap" style="display: inline-flex; align-items: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                  <circle cx="12" cy="12" r="9.5"/>
+                  <path d="m12 12-3.8-2.6"/>
+                  <circle cx="12" cy="12" r="1.8" fill="#c084fc"/>
+                  <path d="M12 6.5a5.5 5.5 0 0 1 5.5 5.5"/>
+                  <line x1="12" y1="4" x2="12" y2="5.5"/>
+                  <line x1="19.5" y1="12" x2="18" y2="12"/>
                 </svg>
               </span>
-              <span id="uv-val">--</span>
+              <span id="pressure-val">--in</span>
             </div>
           </div>
         </div>
@@ -3353,6 +3403,11 @@
         if (!isTempLongPress) toggleTemperatureUnit(e);
       });
 
+      const pressurePill = document.getElementById('pressure-stat-pill');
+      if (pressurePill) {
+        pressurePill.addEventListener('click', (e) => togglePressureUnit(e));
+      }
+
       const speedTile = document.getElementById('trip-card');
       let speedPressTimer, isSpeedLongPress = false, isSpeedTouchHandled = false;
       speedTile.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -3845,6 +3900,7 @@
       if (rawTempF === null) return;
       isFahrenheit = !isFahrenheit;
       renderTemperature();
+      renderPressure();
     }
 
     function renderTemperature() {
@@ -3858,6 +3914,34 @@
       } else {
         const tempC = (rawTempF - 32) * (5 / 9);
         tempEl.innerText = `${Math.round(tempC)}°C`;
+      }
+    }
+
+    let rawPressureHpa = null;
+    let customPressureUnit = null; // null = follow isFahrenheit ('in' if true, 'hPa' if false), or 'in'/'hPa'
+
+    function togglePressureUnit(event) {
+      if (event) event.stopPropagation();
+      if (rawPressureHpa === null) return;
+      const currentUnit = customPressureUnit ? customPressureUnit : (isFahrenheit ? 'in' : 'hPa');
+      customPressureUnit = (currentUnit === 'in') ? 'hPa' : 'in';
+      renderPressure();
+    }
+
+    function renderPressure() {
+      const pressureEl = document.getElementById('pressure-val');
+      if (!pressureEl) return;
+      if (rawPressureHpa === null || isNaN(rawPressureHpa)) {
+        pressureEl.innerText = '--in';
+        return;
+      }
+      const unit = customPressureUnit ? customPressureUnit : (isFahrenheit ? 'in' : 'hPa');
+      if (unit === 'in') {
+        const inHg = (rawPressureHpa * 0.02953).toFixed(2);
+        pressureEl.innerHTML = `${inHg}<span style="font-size: 0.9em; font-weight: 500; margin-left: 1px;">in</span>`;
+      } else {
+        const hpa = Math.round(rawPressureHpa);
+        pressureEl.innerHTML = `${hpa}<span style="font-size: 0.85em; font-weight: 500; margin-left: 1px;">hPa</span>`;
       }
     }
 
@@ -4437,7 +4521,7 @@
       lastWeatherLon = lon;
 
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,uv_index&temperature_unit=fahrenheit&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,uv_index,surface_pressure,pressure_msl&temperature_unit=fahrenheit&timezone=auto`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -4457,24 +4541,37 @@
             </div>
           `;
 
+          // Barometric Pressure
+          if (data.current.pressure_msl !== undefined && data.current.pressure_msl !== null) {
+            rawPressureHpa = data.current.pressure_msl;
+          } else if (data.current.surface_pressure !== undefined && data.current.surface_pressure !== null) {
+            rawPressureHpa = data.current.surface_pressure;
+          }
+          renderPressure();
+
+          // Humidity
           if (data.current.relative_humidity_2m !== undefined) {
             document.getElementById('humidity-val').innerText = `${Math.round(data.current.relative_humidity_2m)}%`;
           }
 
+          // UV Index
           if (data.current.uv_index !== undefined) {
-            const uv = data.current.uv_index.toFixed(1);
-            let uvColor = '#4cd964';
-            if (uv >= 3 && uv < 6) uvColor = '#ffcc00';
-            else if (uv >= 6 && uv < 8) uvColor = '#ff9500';
-            else if (uv >= 8) uvColor = '#ff3b30';
+            const uv = data.current.uv_index;
+            let uvColor = '#ffb703';
+            if (uv < 3) uvColor = '#4cd964';
+            else if (uv < 6) uvColor = '#ffb703';
+            else if (uv < 8) uvColor = '#fb8500';
+            else uvColor = '#ff3b30';
+
+            const uvDisplay = (uv % 1 === 0) ? uv.toFixed(0) : uv.toFixed(1);
 
             document.getElementById('uv-icon-wrap').innerHTML = `
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${uvColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${uvColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                 <circle cx="12" cy="12" r="4"/>
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
               </svg>
             `;
-            document.getElementById('uv-val').innerHTML = `<span style="color: ${uvColor};">${uv}</span>`;
+            document.getElementById('uv-val').innerHTML = `<span style="color: ${uvColor};">${uvDisplay}<span style="font-size: 0.9em; font-weight: 500; margin-left: 1px;">uv</span></span>`;
           }
         }
       } catch (err) {}
@@ -4767,7 +4864,9 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch((err) => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          try { reg.update(); } catch (_) {}
+        }).catch((err) => {
           console.warn('PWA Service Worker registration failed:', err);
         });
       });
