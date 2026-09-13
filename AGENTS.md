@@ -47,5 +47,16 @@
   - **9th-Second Snap Spin Synchronizer**: Die spin triggers right on the 9th second of each 10s step (seconds 9, 19, 29, 39, 49, 59). At 420ms into the 0.85s snap spin (rotated 180° with elastic bounce), the pips smoothly morph into the next face value, landing and resting firmly on the new face right as the 10th second arrives.
   - **Immediate Pause & Reset**: Manually tapping the Die or long-pressing again immediately stops the auto-cycle timer and restores the Die back to crisp WHITE and face 5. Tapping the lower-left Map button returns to navigation and also clears auto-cycling.
 
+### Step 7: Highway Header Conciseness & Corridor Grid Axis Direction [COMPLETED & VERIFIED]
+- **Status**: Completed & Verified.
+- **Achievements**:
+  - **Primary Route Header Singularity**: Eliminated redundant dual-route concatenation (e.g. "I-95 / Route 128") from the location header. The header now focuses exclusively on the primary route (e.g. `I-95 South`), keeping the typography clean, uncluttered, and legible at a glance.
+  - **Concurrent Route Shield Delegation**: Secondary concurrent routes (such as Massachusetts Route 128) continue to be rendered cleanly on their dedicated map shields (`route-badge-container`), preserving dual-route visibility without header text bloat.
+  - **Corridor Grid Axis Logic (`getHighwayCorridorAxis`)**: Replaced raw unconstrained 4-quadrant heading mapping with highway grid axis awareness:
+    - Odd-numbered Interstates (e.g. I-95, I-93) and officially designated North-South state routes (e.g. Route 128) are constrained to `North` or `South`.
+    - Even-numbered Interstates (e.g. I-90 Mass Pike, I-84) are constrained to `East` or `West`.
+    - Includes a ±15° directional hysteresis deadband preventing jitter or false West/East readings along physical curves in circumferential highway arcs (such as I-95 through Lexington and Burlington).
+    - Map shield direction dots (I-95 white dot, Route 128 black dot) are synchronized to the same corridor axis.
+
 ### Post-v4 Wishlist / Deferred
 - **Map Feature Legend & POI Essential Services Filter**: Deferred until after Version 4. Since NOMAD functions as a telemetry and kinetic road-trip HUD rather than a turn-by-turn POI directory, POI clutter filtering will be revisited in future phases.

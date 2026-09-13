@@ -2684,7 +2684,7 @@
 
       if (interstateContainer) {
         if (!inFidget && currentInterstateShield) {
-          const dir = getHighwayDirection(currentInterstateShield, currentHeading);
+          const dir = getHighwayDirection(currentInterstateShield, currentHeading, 'interstate');
           interstateContainer.innerHTML = createInterstateSVG(currentInterstateShield, dir);
           interstateContainer.classList.add('has-shield');
           interstateContainer.setAttribute('title', `Interstate ${currentInterstateShield} (Tap to cycle map styles)`);
@@ -2702,7 +2702,7 @@
         }
 
         if (!inFidget && activeShield) {
-          const dir = getHighwayDirection(activeShield, currentHeading);
+          const dir = getHighwayDirection(activeShield, currentHeading, 'state');
           routeContainer.innerHTML = createRouteSVG(activeShield, dir);
           routeContainer.classList.add('has-shield');
           routeContainer.classList.remove('auto-cycling');
@@ -2786,43 +2786,109 @@
       return 'West';
     }
 
+    function getHighwayCorridorAxis(routeNumber, highwayType = '') {
+      if (!routeNumber) return 'any';
+      const clean = String(routeNumber).toUpperCase().trim();
+      
+      const isInterstate = highwayType === 'interstate' || /^I[-\s]?\d+/i.test(clean) || clean === 'INTERSTATE';
+      const isUS = highwayType === 'us' || /^US[-\s]?\d+/i.test(clean);
+      const isState = highwayType === 'state' || /^(?:RT|ROUTE|SR|MA)[-\s]?\d+/i.test(clean);
+      
+      const numMatch = clean.match(/\d+/);
+      const num = numMatch ? parseInt(numMatch[0], 10) : null;
+      
+      if (num !== null) {
+        // Prominent designated state routes (e.g. Route 128 is officially signed North/South by MassDOT)
+        if (num === 128) return 'north-south';
+        if ([3, 24, 140, 12, 8, 7, 28, 38].includes(num)) return 'north-south';
+        if ([2, 9, 20, 30, 119].includes(num)) return 'east-west';
+        
+        // Interstate Highway Grid (AASHTO standard)
+        // Odd = North/South, Even = East/West
+        if (isInterstate || (!isUS && !isState && (num === 95 || num === 93 || num === 90 || num === 84 || num === 80 || num === 91 || num === 87 || num === 495 || num === 290 || num === 195 || num === 295 || num === 395))) {
+          const baseNum = num >= 100 ? (num % 100) : num;
+          return (baseNum % 2 === 1) ? 'north-south' : 'east-west';
+        }
+        
+        // US Highway Grid (Odd = North/South, Even = East/West)
+        if (isUS) {
+          return (num % 2 === 1) ? 'north-south' : 'east-west';
+        }
+        
+        // General state route fallback
+        if (isState) {
+          return (num % 2 === 1) ? 'north-south' : 'east-west';
+        }
+      }
+      
+      return 'any';
+    }
+
     let currentSignedHighwayDirections = {};
 
-    function getHighwayDirection(routeNumber, heading) {
+    function getHighwayDirection(routeNumber, heading, highwayType = '') {
       if (heading === null || isNaN(heading)) return '';
       const cleanNum = String(routeNumber).toUpperCase().trim();
       const norm = (heading % 360 + 360) % 360;
       const prevDirection = currentSignedHighwayDirections[cleanNum] || null;
+      const axis = getHighwayCorridorAxis(routeNumber, highwayType);
 
-      // True 4-quadrant cardinal direction with a ±12° hysteresis deadband
-      // to avoid jitter when taking curves near the 45°, 135°, 225°, 315° diagonals.
       let newDirection = '';
-      if (prevDirection === 'North') {
-        if (norm >= 57 && norm <= 135) newDirection = 'East';
-        else if (norm > 135 && norm <= 225) newDirection = 'South';
-        else if (norm > 225 && norm <= 303) newDirection = 'West';
-        else newDirection = 'North';
-      } else if (prevDirection === 'East') {
-        if (norm <= 33 || norm >= 315) newDirection = 'North';
-        else if (norm >= 147 && norm <= 225) newDirection = 'South';
-        else if (norm > 225 && norm < 315) newDirection = 'West';
-        else newDirection = 'East';
-      } else if (prevDirection === 'South') {
-        if (norm >= 45 && norm <= 123) newDirection = 'East';
-        else if (norm < 45 || norm >= 315) newDirection = 'North';
-        else if (norm >= 237 && norm <= 315) newDirection = 'West';
-        else newDirection = 'South';
-      } else if (prevDirection === 'West') {
-        if (norm <= 45 || norm >= 327) newDirection = 'North';
-        else if (norm >= 135 && norm <= 213) newDirection = 'South';
-        else if (norm > 45 && norm < 135) newDirection = 'East';
-        else newDirection = 'West';
+
+      if (axis === 'north-south') {
+        // North-South corridor (e.g. I-95, I-93, Route 128, US-1)
+        // Northerly half: [270°..90°], Southerly half: [90°..270°]
+        // ±15° hysteresis deadband around 90° and 270°
+        if (prevDirection === 'North') {
+          if (norm > 105 && norm < 255) newDirection = 'South';
+          else newDirection = 'North';
+        } else if (prevDirection === 'South') {
+          if (norm < 75 || norm > 285) newDirection = 'North';
+          else newDirection = 'South';
+        } else {
+          newDirection = (norm >= 90 && norm <= 270) ? 'South' : 'North';
+        }
+      } else if (axis === 'east-west') {
+        // East-West corridor (e.g. I-90 Mass Pike, I-84, Route 2, Route 9)
+        // Easterly half: [0°..180°], Westerly half: [180°..360°]
+        // ±15° hysteresis deadband around 0° and 180°
+        if (prevDirection === 'East') {
+          if (norm > 195 && norm < 345) newDirection = 'West';
+          else newDirection = 'East';
+        } else if (prevDirection === 'West') {
+          if (norm > 15 && norm < 165) newDirection = 'East';
+          else newDirection = 'West';
+        } else {
+          newDirection = (norm >= 0 && norm < 180) ? 'East' : 'West';
+        }
       } else {
-        // Initial / unlatched quadrant determination (standard 45° sectors)
-        if (norm >= 315 || norm < 45) newDirection = 'North';
-        else if (norm >= 45 && norm < 135) newDirection = 'East';
-        else if (norm >= 135 && norm < 225) newDirection = 'South';
-        else newDirection = 'West';
+        // Full 4-quadrant cardinal direction with ±12° hysteresis deadband
+        if (prevDirection === 'North') {
+          if (norm >= 57 && norm <= 135) newDirection = 'East';
+          else if (norm > 135 && norm <= 225) newDirection = 'South';
+          else if (norm > 225 && norm <= 303) newDirection = 'West';
+          else newDirection = 'North';
+        } else if (prevDirection === 'East') {
+          if (norm <= 33 || norm >= 315) newDirection = 'North';
+          else if (norm >= 147 && norm <= 225) newDirection = 'South';
+          else if (norm > 225 && norm < 315) newDirection = 'West';
+          else newDirection = 'East';
+        } else if (prevDirection === 'South') {
+          if (norm >= 45 && norm <= 123) newDirection = 'East';
+          else if (norm < 45 || norm >= 315) newDirection = 'North';
+          else if (norm >= 237 && norm <= 315) newDirection = 'West';
+          else newDirection = 'South';
+        } else if (prevDirection === 'West') {
+          if (norm <= 45 || norm >= 327) newDirection = 'North';
+          else if (norm >= 135 && norm <= 213) newDirection = 'South';
+          else if (norm > 45 && norm < 135) newDirection = 'East';
+          else newDirection = 'West';
+        } else {
+          if (norm >= 315 || norm < 45) newDirection = 'North';
+          else if (norm >= 45 && norm < 135) newDirection = 'East';
+          else if (norm >= 135 && norm < 225) newDirection = 'South';
+          else newDirection = 'West';
+        }
       }
 
       currentSignedHighwayDirections[cleanNum] = newDirection;
@@ -4326,33 +4392,31 @@
           let candidateRoadName = rawRoad;
           if (isHighwayLocked) {
             if (interstate) {
+              // Primary Interstate designation takes precedence in the header
+              // Secondary concurrent routes (e.g. Route 128) are displayed cleanly on map shields
               candidateRoadName = `I-${interstate}`;
-              if (usRoute && usRoute !== interstate) {
-                candidateRoadName += ` / US-${usRoute}`;
-              } else if (stateRoute && stateRoute !== interstate && isValidHighwayRouteNumber(stateRoute)) {
-                candidateRoadName += ` / ${formatRouteName(stateRoute)}`;
-              }
               if (currentHeading !== null && !isNaN(currentHeading)) {
-                candidateRoadName = `${candidateRoadName} ${getHighwayDirection(interstate, currentHeading)}`;
+                const dir = getHighwayDirection(interstate, currentHeading, 'interstate');
+                if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
               }
             } else if (usRoute) {
               candidateRoadName = `US-${usRoute}`;
-              if (stateRoute && stateRoute !== usRoute && isValidHighwayRouteNumber(stateRoute)) {
-                candidateRoadName += ` / ${formatRouteName(stateRoute)}`;
-              }
               if (currentHeading !== null && !isNaN(currentHeading)) {
-                candidateRoadName = `${candidateRoadName} ${getHighwayDirection(usRoute, currentHeading)}`;
+                const dir = getHighwayDirection(usRoute, currentHeading, 'us');
+                if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
               }
             } else if (stateRoute && isValidHighwayRouteNumber(stateRoute)) {
               candidateRoadName = formatRouteName(stateRoute);
               if (currentHeading !== null && !isNaN(currentHeading)) {
-                candidateRoadName = `${candidateRoadName} ${getHighwayDirection(stateRoute, currentHeading)}`;
+                const dir = getHighwayDirection(stateRoute, currentHeading, 'state');
+                if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
               }
             } else {
               if (lastValidInterstate && (/Yankee Division/i.test(rawRoad) || !rawRoad)) {
                 candidateRoadName = `I-${lastValidInterstate}`;
                 if (currentHeading !== null && !isNaN(currentHeading)) {
-                  candidateRoadName = `${candidateRoadName} ${getHighwayDirection(lastValidInterstate, currentHeading)}`;
+                  const dir = getHighwayDirection(lastValidInterstate, currentHeading, 'interstate');
+                  if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
                 }
               } else {
                 candidateRoadName = rawRoad || lastValidDisplayTitle || "Highway";
@@ -4368,18 +4432,21 @@
           } else if (stateRoute && isValidHighwayRouteNumber(stateRoute)) {
             candidateRoadName = formatRouteName(stateRoute);
             if (currentHeading !== null && !isNaN(currentHeading)) {
-              candidateRoadName = `${candidateRoadName} ${getHighwayDirection(stateRoute, currentHeading)}`;
+              const dir = getHighwayDirection(stateRoute, currentHeading, 'state');
+              if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
             }
           } else if (usRoute) {
             candidateRoadName = `US-${usRoute}`;
             if (currentHeading !== null && !isNaN(currentHeading)) {
-              candidateRoadName = `${candidateRoadName} ${getHighwayDirection(usRoute, currentHeading)}`;
+              const dir = getHighwayDirection(usRoute, currentHeading, 'us');
+              if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
             }
           } else if (/^\d{1,3}[A-Z]?$/i.test(rawRoad.trim())) {
             // Raw route number from OSM road tag without "Route" prefix (e.g. "111")
             candidateRoadName = formatRouteName(rawRoad.trim());
             if (currentHeading !== null && !isNaN(currentHeading)) {
-              candidateRoadName = `${candidateRoadName} ${getHighwayDirection(rawRoad.trim(), currentHeading)}`;
+              const dir = getHighwayDirection(rawRoad.trim(), currentHeading, 'state');
+              if (dir) candidateRoadName = `${candidateRoadName} ${dir}`;
             }
           } else {
             candidateRoadName = rawRoad || (secondaryFallback ? secondaryFallback.street : "Unnamed Road");
