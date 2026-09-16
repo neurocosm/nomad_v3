@@ -58,5 +58,13 @@
     - Includes a ±15° directional hysteresis deadband preventing jitter or false West/East readings along physical curves in circumferential highway arcs (such as I-95 through Lexington and Burlington).
     - Map shield direction dots (I-95 white dot, Route 128 black dot) are synchronized to the same corridor axis.
 
+### Step 8: Weather Cockpit Typography & Atmospheric Scaling [COMPLETED & VERIFIED]
+- **Status**: Completed & Verified.
+- **Achievements**:
+  - **Atmospheric Stats Floor Boost (+11%)**: Upgraded `.weather-details-stacked` and `.pressure-pill` from `clamp(0.92rem, 2.8vw, 1.15rem)` to `clamp(1.02rem, 3.2vw, 1.25rem)`. Eliminates smartphone bottom-out floor clamping on 412px viewports (Pixel 11 Pro), raising rendered font from ~14.7px to ~16.3px for crisp arm's-length legibility.
+  - **Proportional Atmospheric Icons (20px)**: Scaled humidity droplet, UV index sun, and barometric gauge SVGs from 18px to 20px (both static markup and dynamic JavaScript DOM updates) with dedicated flex-shrink preservation.
+  - **Hero Temperature Elevation (+5%)**: Increased `.weather-temp` from `clamp(2.1rem, 6.6vh, 3.1rem)` to `clamp(2.25rem, 7.0vh, 3.3rem)`, giving the temperature number better visual equilibrium alongside the massive speed sign digits.
+  - **Weather Description Harmony**: Scaled `.weather-desc-container` slightly to `clamp(0.95rem, 3.0vw, 1.18rem)` with balanced spacing (`gap: clamp(3px, 0.7vh, 6px)`).
+
 ### Post-v4 Wishlist / Deferred
 - **Map Feature Legend & POI Essential Services Filter**: Deferred until after Version 4. Since NOMAD functions as a telemetry and kinetic road-trip HUD rather than a turn-by-turn POI directory, POI clutter filtering will be revisited in future phases.

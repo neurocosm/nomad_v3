@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nomad-roadtrip-v18-09112026-highway-corridor-grid';
+const CACHE_NAME = 'nomad-roadtrip-v19-09152026-weather-cockpit-scaling';
 
 const ASSETS_TO_CACHE = [
   './',
